@@ -93,6 +93,16 @@ describe('shape CLI', () => {
     expect(() => shape(repo, 'show', 'nope/nothing')).toThrow(/not found/);
   });
 
+  it('init installs the CLAUDE.md block and re-init of CLAUDE.md is idempotent', () => {
+    const repo = tempRepo();
+    writeFileSync(join(repo, 'CLAUDE.md'), '# My project\n');
+    shape(repo, 'init', '--name', 'demo');
+    const content = readFileSync(join(repo, 'CLAUDE.md'), 'utf8');
+    expect(content).toContain('# My project');
+    expect(content).toContain('<!-- APPSHAPE START -->');
+    expect(content.match(/APPSHAPE START/g)).toHaveLength(1);
+  });
+
   it('survives concurrent writers without losing adds (advisory lock)', async () => {
     const repo = tempRepo();
     shape(repo, 'init', '--name', 'demo');

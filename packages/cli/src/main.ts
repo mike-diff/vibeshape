@@ -15,6 +15,7 @@ import {
   updateShape,
 } from '@appshape/core';
 import type { Coverage, Importance } from '@appshape/core';
+import { upsertClaudeMdBlock } from './claudemd.js';
 import { fingerprintEvidence, parseEvidenceSpec } from './evidence.js';
 import { renderPrime, renderShape } from './render.js';
 import { findRepoRoot, gitShortRef, todayISO } from './repo.js';
@@ -51,7 +52,8 @@ program
     const dir = program.opts<{ dir: string }>().dir;
     const name = options.name ?? basename(dir);
     initShape(dir, name);
-    console.log(`initialized .shape/ for "${name}"`);
+    const claudeMd = upsertClaudeMdBlock(dir);
+    console.log(`initialized .shape/ for "${name}" (${claudeMd} CLAUDE.md guidance)`);
     console.log('add your first area:  shape add / --title "Checkout"');
   });
 
