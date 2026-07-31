@@ -1,0 +1,30 @@
+{
+  "name": "@appshape/viewer",
+  "version": "0.1.0",
+  "description": "Read-only local web viewer for the .shape/ coverage map",
+  "type": "module",
+  "main": "dist/server.js",
+  "types": "dist/server.d.ts",
+  "exports": {
+    ".": "./dist/server.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b && vite build",
+    "typecheck": "tsc -b --noEmit && tsc -p tsconfig.client.json --noEmit",
+    "test": "tsc -b && vite build && vitest run"
+  },
+  "dependencies": {
+    "@appshape/core": "workspace:*",
+    "chokidar": "^4.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.2",
+    "typescript": "^5.7.0",
+    "vite": "^6.0.0",
+    "vite-plugin-singlefile": "^2.1.0",
+    "vitest": "^3.0.0"
+  }
+}

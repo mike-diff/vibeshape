@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@appshape/core": "workspace:*",
+    "@appshape/viewer": "workspace:*",
     "commander": "^13.0.0"
   },
   "devDependencies": {

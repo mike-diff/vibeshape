@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>appshape</title>
+    <link rel="icon" href="data:," />
+  </head>
+  <body>
+    <header id="header">
+      <h1 id="app-name">appshape</h1>
+      <span id="overall" class="overall"></span>
+      <span id="counts" class="counts"></span>
+      <div class="spacer"></div>
+      <button id="expand-all" type="button">expand all</button>
+      <button id="collapse-all" type="button">collapse all</button>
+      <label class="toggle"><input id="gaps-only" type="checkbox" /> gaps only</label>
+    </header>
+    <main id="tree" class="tree"></main>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
