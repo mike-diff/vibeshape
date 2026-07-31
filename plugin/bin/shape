@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Resolves the shape CLI: monorepo build first (dogfood), then PATH install.
+set -euo pipefail
+here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+local_cli="$here/../../packages/cli/dist/main.js"
+if [ -f "$local_cli" ]; then
+  exec node "$local_cli" "$@"
+fi
+exec appshape "$@"
