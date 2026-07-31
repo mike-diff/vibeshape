@@ -6,7 +6,7 @@ description: Bootstrap or refresh the app shape for an existing codebase. Use wh
 # Shape survey: bootstrap the coverage map from an existing repo
 
 Derive a proposed shape tree from the codebase, get human approval, then apply
-it via the CLI. Never apply without approval — the human curates the map.
+it via the CLI. Never apply without approval - the human curates the map.
 
 ## Phase 1: explore
 
@@ -24,7 +24,7 @@ Present the proposed tree as an indented markdown outline before touching
 - title, and for leaves an EARS intent (`WHEN ... THE SYSTEM SHALL ...`)
 - proposed importance (`core` for make-or-break flows, `high`, `normal`, `low`)
 - honest initial coverage with evidence paths, based on what you actually
-  found in the code — including `partial`/`gap` where you see holes, and
+  found in the code - including `partial`/`gap` where you see holes, and
   `missing` nodes for surface the app clearly intends but lacks
 
 Aim for 3 to 8 top-level areas, roughly 30 to 150 nodes total; leaves are

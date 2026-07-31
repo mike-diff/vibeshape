@@ -43,7 +43,7 @@ export function renderShape(shape: Shape, options: RenderOptions = {}): string {
   lines.push(
     options.compact
       ? `shape ${shape.manifest.name} ${percent}%`
-      : `${shape.manifest.name} — ${percent}% covered`,
+      : `${shape.manifest.name} - ${percent}% covered`,
   );
   for (const area of areas) renderNode(area, 0, lines, options);
   return lines.join('\n');
@@ -84,7 +84,7 @@ function renderNode(node: ShapeNode, depth: number, lines: string[], options: Re
 /** Orientation block for agent context: usage summary plus compact tree. */
 export function renderPrime(shape: Shape): string {
   return [
-    'This repo has an appshape coverage map in .shape/ — a living tree of intended',
+    'This repo has an appshape coverage map in .shape/ - a living tree of intended',
     'features scored against the code. Consult it before choosing work; update it',
     'after building. Never edit .shape/*.json directly; use the shape CLI:',
     '  shape tree --compact         current map (statuses: V verified, C covered, P partial, G gap, M missing, ? suspect)',

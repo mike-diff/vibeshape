@@ -13,7 +13,7 @@ let input = {};
 try {
   input = JSON.parse(readFileSync(0, 'utf8'));
 } catch {
-  // no stdin — proceed with env fallbacks
+  // no stdin - proceed with env fallbacks
 }
 
 let dir = input.cwd || process.env.CLAUDE_PROJECT_DIR || process.cwd();

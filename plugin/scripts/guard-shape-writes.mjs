@@ -17,7 +17,7 @@ console.log(
       hookEventName: 'PreToolUse',
       permissionDecision: 'deny',
       permissionDecisionReason:
-        `${filePath} is managed by the shape CLI — direct edits bypass validation and locking. ` +
+        `${filePath} is managed by the shape CLI - direct edits bypass validation and locking. ` +
         'Use shape add/set/rm/mv instead (run "shape prime" for usage).',
     },
   }),

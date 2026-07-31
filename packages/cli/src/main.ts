@@ -150,7 +150,7 @@ program
       const node = findNode(shape, id);
       if (!node) throw new Error(`node "${id}" not found`);
       if ((node.children?.length ?? 0) > 0 && options.coverage) {
-        throw new Error(`"${id}" has children — coverage is derived; set it on leaves`);
+        throw new Error(`"${id}" has children - coverage is derived; set it on leaves`);
       }
       if (options.title) node.title = options.title;
       if (options.intent) node.intent = options.intent;
@@ -180,7 +180,7 @@ program
       const node = findNode(shape, id);
       if (!node) throw new Error(`node "${id}" not found`);
       if ((node.children?.length ?? 0) > 0 && !options.force) {
-        throw new Error(`"${id}" has ${node.children!.length} children — pass --force to remove the subtree`);
+        throw new Error(`"${id}" has ${node.children!.length} children - pass --force to remove the subtree`);
       }
       removeNode(shape, id);
     });
@@ -215,7 +215,7 @@ program
       console.log(`${finding.kind === 'drifted' ? 'SUSPECT' : 'WARN   '} ${finding.id}: ${finding.detail}`);
     }
     if (suspects > 0) {
-      console.log(`${suspects} suspect node(s) — re-assess against the code, then run: shape review <id>`);
+      console.log(`${suspects} suspect node(s) - re-assess against the code, then run: shape review <id>`);
       process.exitCode = 1;
     } else {
       console.log(`audit clean${findings.length > 0 ? ` (${findings.length} warning(s))` : ''}`);
@@ -235,7 +235,7 @@ program
       if (node.evidence) node.evidence = fingerprintEvidence(root, node.evidence);
       node.assessed = { at: todayISO(), gitRef: gitShortRef(root) };
     });
-    console.log(`reviewed ${id} — suspect cleared, evidence re-fingerprinted`);
+    console.log(`reviewed ${id} - suspect cleared, evidence re-fingerprinted`);
   });
 
 program

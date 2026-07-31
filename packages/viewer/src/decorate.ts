@@ -33,7 +33,7 @@ function decorateNode(node: ShapeNode): DecoratedNode {
   return decorated;
 }
 
-/** Leaf counts by asserted coverage — what the header summarizes. */
+/** Leaf counts by asserted coverage - what the header summarizes. */
 function countLeaves(node: DecoratedNode, counts: Record<Coverage, number>): void {
   if (!node.children) counts[node.derived.coverage]++;
   for (const child of node.children ?? []) countLeaves(child, counts);

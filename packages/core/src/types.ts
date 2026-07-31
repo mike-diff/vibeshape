@@ -33,7 +33,7 @@ export interface ShapeNode {
   coverage?: Coverage;
   /** Set by audit when evidence drifted since assessment; cleared by review. */
   suspect?: boolean;
-  /** What specifically is missing or weak — the steerable delta. */
+  /** What specifically is missing or weak - the steerable delta. */
   gap?: string;
   importance?: Importance;
   evidence?: Evidence[];

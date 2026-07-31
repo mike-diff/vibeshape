@@ -13,25 +13,25 @@ are the cartographer: the map must reflect the territory after every change.
 
 ## The loop
 
-1. **Consult** — before choosing or starting feature work:
+1. **Consult** - before choosing or starting feature work:
    `shape tree --compact` (or `shape tree --gaps` for open work). Steer toward
    gaps on `core`/`high` importance nodes unless the user directs otherwise.
-2. **Update** — in the same session as any feature change:
+2. **Update** - in the same session as any feature change:
    - Implemented or improved something: `shape set <id> --coverage <level> --evidence file:<path> --evidence test:<path>#<name>`
    - Found something specifically missing: `shape set <id> --coverage gap --gap "<what exactly is missing>"`
    - Built something with no node: `shape add <parent> --title "..." --intent "..."` then set its coverage.
    - Removed a feature: `shape rm <id>`.
-3. **Audit** — when asked, or when the map looks stale: `shape audit` flags
+3. **Audit** - when asked, or when the map looks stale: `shape audit` flags
    nodes whose evidence drifted; re-assess each flagged node against the code,
    then `shape review <id>` once its status is honest again.
 
 ## Coverage levels (leaves assert, parents derive)
 
-- `missing` — nothing in the repo addresses the intent.
-- `gap` — something specific is known absent; the gap note names it.
-- `partial` — some evidence, incomplete against the intent.
-- `covered` — the code embodies the intent; evidence links required.
-- `verified` — covered AND linked tests exist and pass.
+- `missing` - nothing in the repo addresses the intent.
+- `gap` - something specific is known absent; the gap note names it.
+- `partial` - some evidence, incomplete against the intent.
+- `covered` - the code embodies the intent; evidence links required.
+- `verified` - covered AND linked tests exist and pass.
 
 Never set coverage on a node with children; parents roll up automatically
 (a parent is covered only when every child is).
@@ -40,7 +40,7 @@ Never set coverage on a node with children; parents roll up automatically
 
 - Never edit `.shape/*.json` directly. The CLI owns validation, locking, and
   atomic writes. A hook will deny direct edits.
-- A `covered`/`verified` claim without `--evidence` is a guess — always link
+- A `covered`/`verified` claim without `--evidence` is a guess - always link
   the files and tests that realize the intent.
 - Gap notes must be specific enough to steer by: "refresh-token rotation not
   implemented", not "needs work".

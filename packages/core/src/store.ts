@@ -61,7 +61,7 @@ export function saveShape(repoRoot: string, shape: Shape): void {
   }
 }
 
-/** Loads, applies `mutate`, and saves — under an advisory lock. */
+/** Loads, applies `mutate`, and saves - under an advisory lock. */
 export function updateShape(repoRoot: string, mutate: (shape: Shape) => void): Shape {
   return withLock(repoRoot, () => {
     const shape = loadShape(repoRoot);
@@ -102,7 +102,7 @@ function acquireLock(lockDir: string): void {
       sleepSync(LOCK_RETRY_MS);
     }
   }
-  throw new Error(`could not acquire ${lockDir} — remove it if no other shape process is running`);
+  throw new Error(`could not acquire ${lockDir} - remove it if no other shape process is running`);
 }
 
 function sleepSync(ms: number): void {
@@ -120,7 +120,7 @@ function parseFile<T>(filePath: string, parse: (raw: unknown) => T): T {
   try {
     text = readFileSync(filePath, 'utf8');
   } catch {
-    throw new Error(`cannot read ${filePath} — run "shape init" first?`);
+    throw new Error(`cannot read ${filePath} - run "shape init" first?`);
   }
   return parse(JSON.parse(text));
 }

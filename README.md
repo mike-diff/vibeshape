@@ -54,7 +54,7 @@ shape tree
 ```
 
 ```
-your-app — 50% covered
+your-app - 50% covered
   ◐ auth Auth 50% [core]
     ◐ auth/oauth-login OAuth login  gap: refresh rotation missing
 ```
@@ -94,7 +94,7 @@ shape prime                orientation block for agent context
 
 ## Repository layout
 
-- `packages/core` — schema, tree model, coverage roll-up, atomic `.shape/` store
-- `packages/cli` — the `shape` command
-- `packages/viewer` — the local web viewer
-- `plugin/` — the Claude Code plugin (hooks, skills, bin shim)
+- `packages/core`: schema, tree model, coverage roll-up, atomic `.shape/` store
+- `packages/cli`: the `shape` command
+- `packages/viewer`: the local web viewer
+- `plugin/`: the Claude Code plugin (hooks, skills, bin shim)

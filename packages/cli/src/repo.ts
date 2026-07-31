@@ -10,7 +10,7 @@ export function findRepoRoot(start: string): string {
     if (existsSync(join(dir, SHAPE_DIR, 'shape.json'))) return dir;
     const parent = dirname(dir);
     if (parent === dir) {
-      throw new Error(`no ${SHAPE_DIR}/ found from ${start} upward — run "shape init" first`);
+      throw new Error(`no ${SHAPE_DIR}/ found from ${start} upward - run "shape init" first`);
     }
     dir = parent;
   }
