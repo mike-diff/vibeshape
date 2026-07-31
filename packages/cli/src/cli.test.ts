@@ -103,6 +103,45 @@ describe('shape CLI', () => {
     expect(content.match(/APPSHAPE START/g)).toHaveLength(1);
   });
 
+  it('audit flags a claim as suspect when its evidence file changes, review clears it', () => {
+    const repo = seededRepo();
+    const file = join(repo, 'login.ts');
+    writeFileSync(file, 'export const login = 1;\n');
+    shape(repo, 'set', 'auth/login', '--coverage', 'covered', '--evidence', 'file:login.ts');
+    expect(shape(repo, 'audit')).toContain('audit clean');
+
+    writeFileSync(file, 'export const login = 2;\n');
+    let output = '';
+    try {
+      shape(repo, 'audit');
+    } catch (error) {
+      output = (error as { stdout: string }).stdout;
+    }
+    expect(output).toContain('SUSPECT auth/login: login.ts changed since assessment');
+    expect(shape(repo, 'tree', '--compact')).toContain('[C?] auth/login');
+
+    shape(repo, 'review', 'auth/login');
+    expect(shape(repo, 'audit')).toContain('audit clean');
+    expect(shape(repo, 'tree', '--compact')).toContain('[C] auth/login');
+  });
+
+  it('audit flags deleted evidence files and warns on unevidenced covered claims', () => {
+    const repo = seededRepo();
+    const file = join(repo, 'login.ts');
+    writeFileSync(file, 'export const login = 1;\n');
+    shape(repo, 'set', 'auth/login', '--coverage', 'covered', '--evidence', 'file:login.ts');
+    shape(repo, 'set', 'auth/oauth-login', '--coverage', 'covered');
+    rmSync(file);
+    let output = '';
+    try {
+      shape(repo, 'audit');
+    } catch (error) {
+      output = (error as { stdout: string }).stdout;
+    }
+    expect(output).toContain('SUSPECT auth/login: login.ts no longer exists');
+    expect(output).toContain('WARN    auth/oauth-login: covered with no evidence links');
+  });
+
   it('survives concurrent writers without losing adds (advisory lock)', async () => {
     const repo = tempRepo();
     shape(repo, 'init', '--name', 'demo');

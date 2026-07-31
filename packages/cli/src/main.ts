@@ -5,6 +5,7 @@ import {
   COVERAGE_LEVELS,
   IMPORTANCE_LEVELS,
   addNode,
+  auditShape,
   coverageScore,
   derivedCoverage,
   findNode,
@@ -12,6 +13,7 @@ import {
   loadShape,
   moveNode,
   removeNode,
+  suspectNodes,
   updateShape,
 } from '@appshape/core';
 import type { Coverage, Importance } from '@appshape/core';
@@ -196,6 +198,54 @@ program
       movedId = moveNode(shape, id, newParent).id;
     });
     console.log(`moved to ${movedId}`);
+  });
+
+program
+  .command('audit')
+  .description('flag coverage claims whose evidence drifted; nonzero exit if any suspects remain')
+  .action(() => {
+    const root = repoRoot();
+    let findings: ReturnType<typeof auditShape> = [];
+    let suspects = 0;
+    updateShape(root, (shape) => {
+      findings = auditShape(root, shape);
+      suspects = suspectNodes(shape).length;
+    });
+    for (const finding of findings) {
+      console.log(`${finding.kind === 'drifted' ? 'SUSPECT' : 'WARN   '} ${finding.id}: ${finding.detail}`);
+    }
+    if (suspects > 0) {
+      console.log(`${suspects} suspect node(s) — re-assess against the code, then run: shape review <id>`);
+      process.exitCode = 1;
+    } else {
+      console.log(`audit clean${findings.length > 0 ? ` (${findings.length} warning(s))` : ''}`);
+    }
+  });
+
+program
+  .command('review')
+  .description('clear a suspect flag after re-assessing: re-fingerprints evidence and re-stamps the assessment')
+  .argument('<id>', 'node id')
+  .action((id: string) => {
+    const root = repoRoot();
+    updateShape(root, (shape) => {
+      const node = findNode(shape, id);
+      if (!node) throw new Error(`node "${id}" not found`);
+      delete node.suspect;
+      if (node.evidence) node.evidence = fingerprintEvidence(root, node.evidence);
+      node.assessed = { at: todayISO(), gitRef: gitShortRef(root) };
+    });
+    console.log(`reviewed ${id} — suspect cleared, evidence re-fingerprinted`);
+  });
+
+program
+  .command('view')
+  .description('open the live visual map in the browser')
+  .option('--port <port>', 'port to serve on (default 4820)', (value) => Number.parseInt(value, 10))
+  .action(async (options: { port?: number }) => {
+    const { startViewer } = await import('@appshape/viewer');
+    const viewer = await startViewer(repoRoot(), options.port);
+    console.log(`appshape viewer at ${viewer.url}  (ctrl-c to stop)`);
   });
 
 program

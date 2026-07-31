@@ -1,7 +1,4 @@
-import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { EVIDENCE_TYPES } from '@appshape/core';
+import { EVIDENCE_TYPES, hashFile } from '@appshape/core';
 import type { Evidence, EvidenceType } from '@appshape/core';
 
 /**
@@ -29,11 +26,7 @@ export function parseEvidenceSpec(spec: string): Evidence {
 /** Stamps content hashes onto evidence whose files exist under repoRoot. */
 export function fingerprintEvidence(repoRoot: string, evidence: Evidence[]): Evidence[] {
   return evidence.map((e) => {
-    try {
-      const content = readFileSync(join(repoRoot, e.path));
-      return { ...e, hash: createHash('sha256').update(content).digest('hex').slice(0, 16) };
-    } catch {
-      return e;
-    }
+    const hash = hashFile(repoRoot, e.path);
+    return hash ? { ...e, hash } : e;
   });
 }
