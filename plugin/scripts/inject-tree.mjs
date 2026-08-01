@@ -55,9 +55,11 @@ const treeHash = createHash('sha256').update(tree).digest('hex').slice(0, 16);
 
 // Omission check: edited files (recorded by track-edits.mjs) that no node's
 // evidence references. Nudged at most once per file per session.
+// UserPromptSubmit only: on resume, SessionStart and UserPromptSubmit run
+// concurrently and would both deliver the nudge before either marks it.
 const ledgerPath = join(tmpdir(), `appshape-ledger-${sessionKey}`);
 let omissionNote = '';
-try {
+if (input.hook_event_name === 'UserPromptSubmit') try {
   const ledger = JSON.parse(readFileSync(ledgerPath, 'utf8'));
   const pending = Object.keys(ledger).filter((f) => !ledger[f].nudged);
   if (pending.length > 0) {
