@@ -42,9 +42,17 @@ Each node carries an intent, a coverage verdict, and the evidence behind it:
 
 ## Quick start
 
-```sh
-pnpm add -g appshape
+No build, no install step, no dependencies beyond Node: the repo is the plugin.
 
+```sh
+git clone <this repo> ~/appshape
+claude plugin marketplace add ~/appshape
+claude plugin install appshape@appshape --scope project
+```
+
+Or use the CLI directly without Claude Code (add `~/appshape/plugin/bin` to PATH):
+
+```sh
 cd your-app
 shape init
 shape add / --title "Auth" --importance core
@@ -94,7 +102,14 @@ shape prime                orientation block for agent context
 
 ## Repository layout
 
-- `packages/core`: schema, tree model, coverage roll-up, atomic `.shape/` store
-- `packages/cli`: the `shape` command
-- `packages/viewer`: the local web viewer
-- `plugin/`: the Claude Code plugin (hooks, skills, bin shim)
+Everything lives in `plugin/`, as plain ESM with JSDoc types; source is the
+shipped artifact.
+
+- `plugin/bin/`: the `shape` CLI entry
+- `plugin/lib/`: model, roll-up, store, audit, render, viewer server, and tests
+- `plugin/client/`: the viewer web app (assembled in memory at serve time)
+- `plugin/hooks/`, `plugin/scripts/`: enforcement hooks
+- `plugin/skills/`: the shape and survey skills
+
+Development: edit and run. Tests: `node --test plugin/lib/*.test.mjs` (built-in
+runner, no packages).

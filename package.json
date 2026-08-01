@@ -1,16 +1,10 @@
 {
-  "name": "appshape-workspace",
+  "name": "appshape-repo",
   "private": true,
   "scripts": {
-    "build": "pnpm -r build",
-    "test": "pnpm -r test",
-    "typecheck": "pnpm -r typecheck",
-    "bundle": "pnpm -r build && node scripts/bundle-plugin.mjs"
+    "test": "node --test plugin/lib/*.test.mjs"
   },
   "engines": {
     "node": ">=20"
-  },
-  "devDependencies": {
-    "esbuild": "^0.28.1"
   }
 }
