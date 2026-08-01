@@ -32,6 +32,13 @@ function seededRepo(): string {
   return repo;
 }
 
+/** Marks a node covered the legitimate way: with a real evidence file. */
+function markCovered(repo: string, id: string): void {
+  const evidenceFile = `${id.replaceAll('/', '-')}.ts`;
+  writeFileSync(join(repo, evidenceFile), `export const x = '${id}';\n`);
+  shape(repo, 'set', id, '--coverage', 'covered', '--evidence', `file:${evidenceFile}`);
+}
+
 describe('shape CLI', () => {
   it('init + add + tree round-trips through the filesystem', () => {
     const repo = seededRepo();
@@ -54,9 +61,21 @@ describe('shape CLI', () => {
 
   it('derives parent coverage from children in tree output', () => {
     const repo = seededRepo();
-    shape(repo, 'set', 'auth/login', '--coverage', 'covered');
+    markCovered(repo, 'auth/login');
     const tree = shape(repo, 'tree', '--compact');
     expect(tree).toContain('[P] auth Auth');
+  });
+
+  it('refuses covered without evidence and verified without test evidence', () => {
+    const repo = seededRepo();
+    expect(() => shape(repo, 'set', 'auth/login', '--coverage', 'covered')).toThrow();
+    writeFileSync(join(repo, 'login.ts'), 'export const login = 1;\n');
+    expect(() =>
+      shape(repo, 'set', 'auth/login', '--coverage', 'verified', '--evidence', 'file:login.ts'),
+    ).toThrow();
+    writeFileSync(join(repo, 'login.test.ts'), 'test\n');
+    shape(repo, 'set', 'auth/login', '--coverage', 'verified', '--evidence', 'file:login.ts', '--evidence', 'test:login.test.ts#login works');
+    expect(shape(repo, 'tree', '--compact')).toContain('[V] auth/login');
   });
 
   it('refuses to set coverage on a node with children', () => {
@@ -66,11 +85,24 @@ describe('shape CLI', () => {
 
   it('--gaps hides covered leaves and keeps uncovered ones', () => {
     const repo = seededRepo();
-    shape(repo, 'set', 'auth/login', '--coverage', 'covered');
+    markCovered(repo, 'auth/login');
     shape(repo, 'set', 'auth/oauth-login', '--coverage', 'gap', '--gap', 'no refresh rotation');
     const tree = shape(repo, 'tree', '--compact', '--gaps');
     expect(tree).not.toContain('auth/login Login');
     expect(tree).toContain('!no refresh rotation');
+  });
+
+  it('--gaps sorts open work by importance, core first', () => {
+    const repo = seededRepo();
+    shape(repo, 'add', 'auth', '--title', 'MFA', '--importance', 'core');
+    shape(repo, 'add', 'auth', '--title', 'Password Reset', '--importance', 'low');
+    const tree = shape(repo, 'tree', '--compact', '--gaps');
+    const mfa = tree.indexOf('auth/mfa');
+    const reset = tree.indexOf('auth/password-reset');
+    const login = tree.indexOf('auth/login');
+    expect(mfa).toBeGreaterThan(-1);
+    expect(mfa).toBeLessThan(login);
+    expect(reset).toBeGreaterThan(login);
   });
 
   it('rm requires --force for subtrees and rewrites ids on mv', () => {
@@ -130,7 +162,12 @@ describe('shape CLI', () => {
     const file = join(repo, 'login.ts');
     writeFileSync(file, 'export const login = 1;\n');
     shape(repo, 'set', 'auth/login', '--coverage', 'covered', '--evidence', 'file:login.ts');
-    shape(repo, 'set', 'auth/oauth-login', '--coverage', 'covered');
+    // Unevidenced covered can no longer be created via the CLI; simulate a
+    // legacy map by editing the area file directly.
+    const areaFile = join(repo, '.shape', 'auth.json');
+    const area = JSON.parse(readFileSync(areaFile, 'utf8'));
+    area.children.find((c: { id: string }) => c.id === 'auth/oauth-login').coverage = 'covered';
+    writeFileSync(areaFile, JSON.stringify(area));
     rmSync(file);
     let output = '';
     try {
@@ -144,7 +181,7 @@ describe('shape CLI', () => {
 
   it('changing intent on an assessed node marks it suspect until re-assessed', () => {
     const repo = seededRepo();
-    shape(repo, 'set', 'auth/login', '--coverage', 'covered');
+    markCovered(repo, 'auth/login');
     const output = shape(repo, 'set', 'auth/login', '--intent', 'WHEN a user logs in THE SYSTEM SHALL also rotate the session token');
     expect(output).toContain('marked suspect');
     expect(shape(repo, 'tree', '--compact')).toContain('[C?] auth/login');
@@ -155,7 +192,7 @@ describe('shape CLI', () => {
 
   it('re-asserting coverage together with a new intent does not mark suspect', () => {
     const repo = seededRepo();
-    shape(repo, 'set', 'auth/login', '--coverage', 'covered');
+    markCovered(repo, 'auth/login');
     shape(repo, 'set', 'auth/login', '--intent', 'WHEN a user logs in THE SYSTEM SHALL create a session', '--coverage', 'partial');
     expect(shape(repo, 'tree', '--compact')).toContain('[P] auth/login');
     expect(shape(repo, 'tree', '--compact')).not.toContain('[P?]');
@@ -163,8 +200,8 @@ describe('shape CLI', () => {
 
   it('budget mode collapses covered leaves but keeps area lines and open work', () => {
     const repo = seededRepo();
-    shape(repo, 'set', 'auth/login', '--coverage', 'covered');
-    shape(repo, 'set', 'auth/oauth-login', '--coverage', 'covered');
+    markCovered(repo, 'auth/login');
+    markCovered(repo, 'auth/oauth-login');
     shape(repo, 'add', '/', '--title', 'Checkout');
     shape(repo, 'add', 'checkout', '--title', 'Cart');
     shape(repo, 'set', 'checkout/cart', '--coverage', 'gap', '--gap', 'no cart yet');
