@@ -11,10 +11,18 @@ features scored against the code. For every feature-related task: consult it
 Run \`shape prime\` for full usage.
 ${END}`;
 
-/** Installs or refreshes the delimited appshape block in CLAUDE.md. */
-export function upsertClaudeMdBlock(repoRoot: string): 'added' | 'updated' {
-  const file = join(repoRoot, 'CLAUDE.md');
+/**
+ * Installs or refreshes the delimited appshape block in a guidance file
+ * (CLAUDE.md, AGENTS.md). Upgrade-safe: re-running replaces only the block.
+ */
+export function upsertGuidanceBlock(
+  repoRoot: string,
+  filename: string,
+  options: { createIfMissing: boolean },
+): 'added' | 'updated' | 'skipped' {
+  const file = join(repoRoot, filename);
   if (!existsSync(file)) {
+    if (!options.createIfMissing) return 'skipped';
     writeFileSync(file, `${BLOCK}\n`);
     return 'added';
   }
