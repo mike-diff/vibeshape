@@ -152,6 +152,17 @@ async function run(argv: string[]): Promise<void> {
           node.evidence = fingerprintEvidence(root, evidence.map(parseEvidenceSpec));
         }
         if (coverage) {
+          const finalEvidence = evidence.length > 0 ? node.evidence : boolFlag(parsed, 'clear-evidence') ? [] : node.evidence ?? [];
+          if ((coverage === 'covered' || coverage === 'verified') && (finalEvidence?.length ?? 0) === 0) {
+            throw new Error(
+              `"${coverage}" requires --evidence linking the code that realizes the intent; without evidence use partial`,
+            );
+          }
+          if (coverage === 'verified' && !finalEvidence?.some((e) => e.type === 'test')) {
+            throw new Error(
+              'verified requires test evidence (--evidence test:path#name); a claim without a test is covered at best',
+            );
+          }
           node.coverage = coverage;
           delete node.suspect;
           node.assessed = { at: todayISO(), gitRef: gitShortRef(root) };
