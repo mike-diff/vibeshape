@@ -15,8 +15,8 @@ import { loadShape, shapeDirPath } from './store.mjs';
  * @property {() => Promise<void>} close
  */
 
-export const DEFAULT_PORT = 4820;
-export const DEFAULT_HOST = '127.0.0.1';
+const DEFAULT_PORT = 4820;
+const DEFAULT_HOST = '127.0.0.1';
 const PORT_ATTEMPTS = 21;
 const KEEP_ALIVE_MS = 25_000;
 const POLL_MS = 300;
@@ -53,7 +53,7 @@ function buildClientHtml() {
 }
 
 /** The assembled client page, built once on first use. */
-export function getClientHtml() {
+function getClientHtml() {
   if (clientHtml === undefined) clientHtml = buildClientHtml();
   return clientHtml;
 }

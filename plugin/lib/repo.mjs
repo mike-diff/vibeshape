@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
-import { SHAPE_DIR } from './index.mjs';
+import { SHAPE_DIR } from './store.mjs';
 /** Walks up from `start` to find the directory containing `.shape/`. */
 export function findRepoRoot(start) {
     let dir = resolve(start);

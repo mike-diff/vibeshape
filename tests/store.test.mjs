@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { initShape, loadShape, updateShape, withLock } from './store.mjs';
-import { addNode } from './tree.mjs';
+import { initShape, loadShape, updateShape, withLock } from '../plugin/lib/store.mjs';
+import { addNode } from '../plugin/lib/tree.mjs';
 
 const tempDirs = [];
 

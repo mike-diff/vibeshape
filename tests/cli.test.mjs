@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 
-const CLI = join(import.meta.dirname, '..', 'bin', 'shape.mjs');
+const CLI = join(import.meta.dirname, '..', 'plugin', 'bin', 'shape.mjs');
 const execFileAsync = promisify(execFile);
 const tempDirs = [];
 

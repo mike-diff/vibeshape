@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { coverageScore, derivedCoverage, derivedSuspect } from './rollup.mjs';
+import { coverageScore, derivedCoverage, derivedSuspect } from '../plugin/lib/rollup.mjs';
 
 function leaf(id, coverage, importance) {
   const node = { id, title: id };

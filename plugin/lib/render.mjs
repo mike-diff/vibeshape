@@ -1,4 +1,4 @@
-import { coverageScore, derivedCoverage, derivedSuspect, importanceWeight } from './index.mjs';
+import { coverageScore, derivedCoverage, derivedSuspect, importanceWeight } from './rollup.mjs';
 const COMPACT_CODE = {
     missing: 'M',
     gap: 'G',

@@ -1,6 +1,10 @@
 #!/usr/bin/env node
 import { basename } from 'node:path';
-import { COVERAGE_LEVELS, IMPORTANCE_LEVELS, addNode, auditShape, coverageScore, derivedCoverage, findNode, initShape, loadShape, moveNode, removeNode, suspectNodes, updateShape, } from '../lib/index.mjs';
+import { COVERAGE_LEVELS, IMPORTANCE_LEVELS } from '../lib/types.mjs';
+import { addNode, findNode, moveNode, removeNode } from '../lib/tree.mjs';
+import { auditShape, suspectNodes } from '../lib/audit.mjs';
+import { coverageScore, derivedCoverage } from '../lib/rollup.mjs';
+import { initShape, loadShape, updateShape } from '../lib/store.mjs';
 import { boolFlag, enumFlag, intFlag, listFlag, parseArgs, requireFlag, requirePositionals, strFlag, } from '../lib/args.mjs';
 import { upsertGuidanceBlock } from '../lib/claudemd.mjs';
 import { fingerprintEvidence, parseEvidenceSpec } from '../lib/evidence.mjs';
@@ -199,7 +203,8 @@ async function run(argv) {
         }
         case 'snapshot': {
             const root = repoRoot();
-            const { decorateShape, makeSnapshotHtml } = await import('../lib/index.mjs');
+            const { decorateShape } = await import('../lib/decorate.mjs');
+            const { makeSnapshotHtml } = await import('../lib/server.mjs');
             const { writeFileSync } = await import('node:fs');
             const { join } = await import('node:path');
             const out = strFlag(parsed, 'out') ?? join(root, '.shape', 'snapshot.html');
@@ -208,7 +213,7 @@ async function run(argv) {
             return;
         }
         case 'view': {
-            const { startViewer } = await import('../lib/index.mjs');
+            const { startViewer } = await import('../lib/server.mjs');
             const viewer = await startViewer(repoRoot(), intFlag(parsed, 'port'), strFlag(parsed, 'host'));
             console.log(`appshape viewer at ${viewer.url}  (ctrl-c to stop)`);
             return;

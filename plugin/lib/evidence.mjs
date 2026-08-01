@@ -1,4 +1,5 @@
-import { EVIDENCE_TYPES, hashFile } from './index.mjs';
+import { EVIDENCE_TYPES } from './types.mjs';
+import { hashFile } from './fingerprint.mjs';
 /**
  * Parses an evidence spec of the form `type:path` or `type:path#name`,
  * e.g. `file:src/auth/oauth.ts`, `test:tests/auth.test.ts#oauth login`.

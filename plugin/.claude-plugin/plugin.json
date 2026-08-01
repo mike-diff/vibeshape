@@ -1,5 +1,5 @@
 {
   "name": "appshape",
   "description": "Living coverage map for agent-built apps: consult, maintain, and audit the .shape/ tree",
-  "version": "0.4.0"
+  "version": "0.4.1"
 }

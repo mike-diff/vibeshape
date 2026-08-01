@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { addNode, findNode, moveNode, removeNode, slugify } from './tree.mjs';
+import { addNode, findNode, moveNode, removeNode, slugify } from '../plugin/lib/tree.mjs';
 
 function emptyShape() {
   return { manifest: { name: 'app', schemaVersion: 1, areas: [] }, areas: [] };

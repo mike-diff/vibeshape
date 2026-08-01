@@ -2,7 +2,7 @@
   "name": "appshape-repo",
   "private": true,
   "scripts": {
-    "test": "node --test plugin/lib/*.test.mjs"
+    "test": "node --test tests/*.test.mjs"
   },
   "engines": {
     "node": ">=20"

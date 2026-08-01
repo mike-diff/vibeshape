@@ -1,3 +1,5 @@
 #!/usr/bin/env bash
-# appshape CLI, bundled and dependency-free. Requires only node on PATH.
+# Bare-name entry for the Bash tool PATH; the CLI itself is plain ESM in
+# shape.mjs (bash cannot exec .mjs by name, node cannot shebang extensionless
+# ESM, hence this two-line shim). Requires only node on PATH.
 exec node "$(dirname "${BASH_SOURCE[0]}")/shape.mjs" "$@"

@@ -105,11 +105,12 @@ shape prime                orientation block for agent context
 Everything lives in `plugin/`, as plain ESM with JSDoc types; source is the
 shipped artifact.
 
-- `plugin/bin/`: the `shape` CLI entry
-- `plugin/lib/`: model, roll-up, store, audit, render, viewer server, and tests
+- `plugin/bin/`: the `shape` CLI entry (on the agent's PATH while enabled)
+- `plugin/lib/`: model, roll-up, store, audit, render, viewer server
 - `plugin/client/`: the viewer web app (assembled in memory at serve time)
 - `plugin/hooks/`, `plugin/scripts/`: enforcement hooks
 - `plugin/skills/`: the shape and survey skills
+- `tests/`: the test suite (repo-only; not shipped with the plugin)
 
-Development: edit and run. Tests: `node --test plugin/lib/*.test.mjs` (built-in
+Development: edit and run. Tests: `node --test tests/*.test.mjs` (built-in
 runner, no packages).

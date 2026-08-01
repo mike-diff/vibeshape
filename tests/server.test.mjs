@@ -3,13 +3,13 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, it } from 'node:test';
-import { decorateShape } from './decorate.mjs';
-import { makeSnapshotHtml, startViewer } from './server.mjs';
+import { decorateShape } from '../plugin/lib/decorate.mjs';
+import { makeSnapshotHtml, startViewer } from '../plugin/lib/server.mjs';
 
 /**
- * @typedef {import('./types.mjs').Manifest} Manifest
- * @typedef {import('./types.mjs').ShapeNode} ShapeNode
- * @typedef {import('./decorate.mjs').DecoratedShape} DecoratedShape
+ * @typedef {import('../plugin/lib/types.mjs').Manifest} Manifest
+ * @typedef {import('../plugin/lib/types.mjs').ShapeNode} ShapeNode
+ * @typedef {import('../plugin/lib/decorate.mjs').DecoratedShape} DecoratedShape
  */
 
 /** @type {string[]} */
