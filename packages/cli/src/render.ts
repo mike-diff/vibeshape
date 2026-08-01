@@ -32,11 +32,29 @@ export interface RenderOptions {
   gapsOnly?: boolean;
   area?: string;
   color?: boolean;
+  /** Past this many total nodes, degrade to area lines plus gap/suspect leaves. */
+  budgetNodes?: number;
+  /** Internal: render top-level area lines even when gapsOnly would hide them. */
+  forceAreaLines?: boolean;
+}
+
+function countNodes(areas: ShapeNode[]): number {
+  let count = 0;
+  for (const area of areas) walkCount(area, () => count++);
+  return count;
+}
+
+function walkCount(node: ShapeNode, visit: () => void): void {
+  visit();
+  for (const child of node.children ?? []) walkCount(child, visit);
 }
 
 export function renderShape(shape: Shape, options: RenderOptions = {}): string {
   const areas = options.area ? shape.areas.filter((a) => a.id === options.area) : shape.areas;
   if (options.area && areas.length === 0) throw new Error(`area "${options.area}" not found`);
+  const total = countNodes(areas);
+  const overBudget = options.budgetNodes !== undefined && total > options.budgetNodes;
+  const effective: RenderOptions = overBudget ? { ...options, gapsOnly: true, forceAreaLines: true } : options;
   const lines: string[] = [];
   const whole: ShapeNode = { id: 'root', title: shape.manifest.name, children: areas };
   const percent = Math.round(coverageScore(whole) * 100);
@@ -45,7 +63,10 @@ export function renderShape(shape: Shape, options: RenderOptions = {}): string {
       ? `shape ${shape.manifest.name} ${percent}%`
       : `${shape.manifest.name} - ${percent}% covered`,
   );
-  for (const area of areas) renderNode(area, 0, lines, options);
+  for (const area of areas) renderNode(area, 0, lines, effective, true);
+  if (overBudget) {
+    lines.push(`(budget mode: ${total} nodes, showing areas and open work only; run shape tree --compact for the full map)`);
+  }
   return lines.join('\n');
 }
 
@@ -56,8 +77,8 @@ function includeNode(node: ShapeNode, options: RenderOptions): boolean {
   return derivedSuspect(node);
 }
 
-function renderNode(node: ShapeNode, depth: number, lines: string[], options: RenderOptions): void {
-  if (!includeNode(node, options)) return;
+function renderNode(node: ShapeNode, depth: number, lines: string[], options: RenderOptions, isArea = false): void {
+  if (!includeNode(node, options) && !(isArea && options.forceAreaLines)) return;
   const coverage = derivedCoverage(node);
   const suspect = node.suspect === true;
   const indent = '  '.repeat(depth + 1);
