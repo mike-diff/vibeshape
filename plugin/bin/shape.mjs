@@ -1792,7 +1792,8 @@ function renderNode(node, depth, lines, options, isArea = false) {
     const label = hasChildren ? `${node.title}${percent}` : node.title;
     lines.push(`${indent}${glyph} ${dim}${node.id}${reset} ${label}${importance}${gap}`);
   }
-  for (const child of node.children ?? [])
+  const children = options.gapsOnly ? [...node.children ?? []].sort((a, b) => importanceWeight(b) - importanceWeight(a)) : node.children ?? [];
+  for (const child of children)
     renderNode(child, depth + 1, lines, options);
 }
 function renderPrime(shape) {
@@ -1960,6 +1961,13 @@ async function run(argv) {
           node.evidence = fingerprintEvidence(root, evidence.map(parseEvidenceSpec));
         }
         if (coverage) {
+          const finalEvidence = evidence.length > 0 ? node.evidence : boolFlag(parsed, "clear-evidence") ? [] : node.evidence ?? [];
+          if ((coverage === "covered" || coverage === "verified") && (finalEvidence?.length ?? 0) === 0) {
+            throw new Error(`"${coverage}" requires --evidence linking the code that realizes the intent; without evidence use partial`);
+          }
+          if (coverage === "verified" && !finalEvidence?.some((e) => e.type === "test")) {
+            throw new Error("verified requires test evidence (--evidence test:path#name); a claim without a test is covered at best");
+          }
           node.coverage = coverage;
           delete node.suspect;
           node.assessed = { at: todayISO(), gitRef: gitShortRef(root) };

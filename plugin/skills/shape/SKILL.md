@@ -30,8 +30,12 @@ are the cartographer: the map must reflect the territory after every change.
 - `missing` - nothing in the repo addresses the intent.
 - `gap` - something specific is known absent; the gap note names it.
 - `partial` - some evidence, incomplete against the intent.
-- `covered` - the code embodies the intent; evidence links required.
-- `verified` - covered AND linked tests exist and pass.
+- `covered` - the code embodies the intent; the CLI refuses this without
+  `--evidence`. No evidence means partial, not covered.
+- `verified` - covered AND named tests exercise it; the CLI refuses this
+  without at least one `--evidence test:...` link. Prefer reaching verified
+  over accumulating covered: covered is judgment, verified touches ground
+  truth. When you finish a feature that has tests, always link them.
 
 Never set coverage on a node with children; parents roll up automatically
 (a parent is covered only when every child is).
@@ -57,6 +61,22 @@ coverage is re-asserted; that flag is the map telling you to re-judge.
 Humans may also edit the map directly with the same CLI from a terminal; the
 map's history does not distinguish authors. Never assume a node you did not
 write is wrong; challenge it with evidence like any other claim.
+
+## Unmapped-edit nudges
+
+Injected context may list files you edited that no shape node references.
+Treat each one deliberately: if user-facing behavior changed, add or update
+the covering node with that file as evidence; if the edit was internal
+(refactor, config, tests for an existing node), you may ignore the nudge.
+Never leave a nudge unconsidered - silent omissions are how the map lies.
+
+## What the map is not
+
+The map tracks the product surface, not code health. Performance, security,
+refactoring debt, and developer experience have no nodes unless someone adds
+them. Map-green is not done: do not decline necessary engineering work just
+because no node names it, and do not chase easy leaves to raise the coverage
+number - the gaps view sorts by importance for a reason.
 
 ## Rules
 
