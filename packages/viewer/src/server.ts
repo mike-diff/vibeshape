@@ -1,15 +1,17 @@
-import { watch } from 'chokidar';
-import { readFileSync } from 'node:fs';
+import { readdirSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import type { IncomingMessage, Server, ServerResponse } from 'node:http';
 import { join } from 'node:path';
 import { loadShape, shapeDirPath } from '@appshape/core';
+import { CLIENT_HTML, SNAPSHOT_MARKER } from './client-html.js';
 import { decorateShape } from './decorate.js';
+import type { DecoratedShape } from './decorate.js';
 
 export const DEFAULT_PORT = 4820;
 export const DEFAULT_HOST = '127.0.0.1';
 const PORT_ATTEMPTS = 21;
 const KEEP_ALIVE_MS = 25_000;
+const POLL_MS = 300;
 
 export interface Viewer {
   url: string;
@@ -17,32 +19,37 @@ export interface Viewer {
 }
 
 /**
- * The Vite bundle always lands in `<package>/dist/client`. Resolving via the
- * package root keeps this correct whether server.ts runs from dist/ or, under
- * vitest, straight from src/.
+ * Renders a standalone page carrying its own data, so it needs no server: the
+ * client sees `window.__SHAPE__` and skips both the fetch and the event stream.
  */
-const CLIENT_HTML = join(import.meta.dirname, '..', 'dist', 'client', 'index.html');
+export function makeSnapshotHtml(shape: DecoratedShape): string {
+  const json = JSON.stringify(shape).replace(/</g, '\\u003c');
+  return CLIENT_HTML.replace(SNAPSHOT_MARKER, () => `<script>window.__SHAPE__=${json}</script>`);
+}
 
-export async function startViewer(repoRoot: string, port = DEFAULT_PORT, host = DEFAULT_HOST): Promise<Viewer> {
-  const html = readFileSync(CLIENT_HTML, 'utf8');
+export async function startViewer(
+  repoRoot: string,
+  port = DEFAULT_PORT,
+  host = DEFAULT_HOST,
+): Promise<Viewer> {
   const clients = new Set<ServerResponse>();
+  const shapeDir = shapeDirPath(repoRoot);
 
   const server = createServer((req, res) => {
-    handle(req, res, repoRoot, html, clients);
+    handle(req, res, repoRoot, clients);
   });
   const bound = await listen(server, port, host);
 
-  const watcher = watch(shapeDirPath(repoRoot), {
-    ignoreInitial: true,
-    awaitWriteFinish: { stabilityThreshold: 200, pollInterval: 50 },
-  });
-  const notify = (): void => {
+  // Polling beats a watcher dependency here: the directory is a handful of
+  // small files, and mtime+size catches every edit the CLI can make.
+  let fingerprint = shapeFingerprint(shapeDir);
+  const poll = setInterval(() => {
+    const next = shapeFingerprint(shapeDir);
+    if (next === fingerprint) return;
+    fingerprint = next;
     for (const client of clients) client.write('event: shape-changed\ndata: {}\n\n');
-  };
-  watcher.on('add', notify).on('change', notify).on('unlink', notify);
-  // Resolve only once the initial scan is done, so changes made right after
-  // startViewer() resolves cannot slip through unwatched.
-  await new Promise<void>((resolve) => watcher.once('ready', resolve));
+  }, POLL_MS);
+  poll.unref();
 
   const keepAlive = setInterval(() => {
     for (const client of clients) client.write(': keep-alive\n\n');
@@ -52,10 +59,10 @@ export async function startViewer(repoRoot: string, port = DEFAULT_PORT, host = 
   return {
     url: `http://${host}:${bound}`,
     async close(): Promise<void> {
+      clearInterval(poll);
       clearInterval(keepAlive);
       for (const client of clients) client.end();
       clients.clear();
-      await watcher.close();
       await new Promise<void>((resolve, reject) => {
         server.close((err) => (err ? reject(err) : resolve()));
       });
@@ -63,21 +70,39 @@ export async function startViewer(repoRoot: string, port = DEFAULT_PORT, host = 
   };
 }
 
+/** Cheap stamp of every .json in `.shape/`; changes whenever any file does. */
+function shapeFingerprint(shapeDir: string): string {
+  let stamp = '';
+  try {
+    for (const file of readdirSync(shapeDir).sort()) {
+      if (!file.endsWith('.json')) continue;
+      const stats = statSync(join(shapeDir, file));
+      stamp += `${file}:${stats.mtimeMs}:${stats.size};`;
+    }
+  } catch {
+    return 'missing';
+  }
+  return stamp;
+}
+
 function handle(
   req: IncomingMessage,
   res: ServerResponse,
   repoRoot: string,
-  html: string,
   clients: Set<ServerResponse>,
 ): void {
   const path = (req.url ?? '/').split('?')[0];
   if (path === '/') {
     res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
-    res.end(html);
+    res.end(CLIENT_HTML);
     return;
   }
   if (path === '/shape') {
     sendShape(res, repoRoot);
+    return;
+  }
+  if (path === '/snapshot') {
+    sendSnapshot(res, repoRoot);
     return;
   }
   if (path === '/events') {
@@ -91,11 +116,28 @@ function handle(
 function sendShape(res: ServerResponse, repoRoot: string): void {
   try {
     const body = JSON.stringify(decorateShape(loadShape(repoRoot)));
-    res.writeHead(200, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' });
+    res.writeHead(200, {
+      'content-type': 'application/json; charset=utf-8',
+      'cache-control': 'no-store',
+    });
     res.end(body);
   } catch (err) {
     res.writeHead(500, { 'content-type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }));
+  }
+}
+
+function sendSnapshot(res: ServerResponse, repoRoot: string): void {
+  try {
+    const body = makeSnapshotHtml(decorateShape(loadShape(repoRoot)));
+    res.writeHead(200, {
+      'content-type': 'text/html; charset=utf-8',
+      'content-disposition': 'attachment; filename="shape-snapshot.html"',
+    });
+    res.end(body);
+  } catch (err) {
+    res.writeHead(500, { 'content-type': 'text/plain; charset=utf-8' });
+    res.end(err instanceof Error ? err.message : String(err));
   }
 }
 

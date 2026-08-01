@@ -1,6 +1,6 @@
 import { defineConfig } from 'vitest/config';
 
-/** Separate from vite.config.ts, whose `root: client` is for the browser bundle only. */
+/** Server-side tests only; the client is plain JS checked by tsconfig.client.json. */
 export default defineConfig({
   test: {
     include: ['src/**/*.test.ts'],

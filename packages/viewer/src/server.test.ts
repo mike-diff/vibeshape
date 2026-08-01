@@ -4,8 +4,9 @@ import { join } from 'node:path';
 import { serializeArea, serializeManifest } from '@appshape/core';
 import type { ShapeNode } from '@appshape/core';
 import { afterEach, describe, expect, it } from 'vitest';
-import { startViewer } from './server.js';
+import { decorateShape } from './decorate.js';
 import type { DecoratedShape } from './decorate.js';
+import { makeSnapshotHtml, startViewer } from './server.js';
 
 const temps: string[] = [];
 const viewers: { close(): Promise<void> }[] = [];
@@ -70,7 +71,7 @@ describe('viewer server', () => {
     expect(shape.areas[0]!.children![0]!.derived.suspect).toBe(false);
   });
 
-  it('serves the built single-file client at /', async () => {
+  it('serves a self-contained client at / with no external assets', async () => {
     const viewer = await start(fixtureRepo(mixedArea()));
     const response = await fetch(`${viewer.url}/`);
 
@@ -78,7 +79,20 @@ describe('viewer server', () => {
     const html = await response.text();
     expect(html).toContain('id="tree"');
     expect(html).toContain('gaps only');
-    expect(html).not.toMatch(/<script[^>]+src="\.?\//);
+    // The generator inlines style.css and main.js; nothing may be fetched.
+    expect(html).toContain('--verified:');
+    expect(html).toContain('EventSource');
+    expect(html).not.toMatch(/<(script|link)[^>]+(src|href)="(?!data:)/);
+  });
+
+  it('ships the prompt palette and its four steering prompts', async () => {
+    const viewer = await start(fixtureRepo(mixedArea()));
+    const html = await (await fetch(`${viewer.url}/`)).text();
+
+    expect(html).toContain('id="palette"');
+    for (const label of ['Mark covered', 'Add children', 'Re-assess', 'Challenge']) {
+      expect(html).toContain(label);
+    }
   });
 
   it('emits shape-changed over SSE when an area file is written', async () => {
@@ -103,6 +117,44 @@ describe('viewer server', () => {
 
     expect(second.url).not.toBe(first.url);
     expect((await (await fetch(`${second.url}/shape`)).json()).name).toBe('demo');
+  });
+});
+
+describe('makeSnapshotHtml', () => {
+  it('embeds the shape so the page renders without a server', () => {
+    const decorated = decorateShape({
+      manifest: { name: 'demo', schemaVersion: 1, areas: ['auth'] },
+      areas: [mixedArea()],
+    });
+    const html = makeSnapshotHtml(decorated);
+
+    expect(html).toContain('window.__SHAPE__=');
+    expect(html).toContain('"auth/oauth"');
+    expect(html).toContain('Login');
+    expect(html).toContain('no refresh rotation');
+    expect(html).not.toContain('<!--__SNAPSHOT_DATA__-->');
+  });
+
+  it('escapes < so embedded data cannot close the script tag', () => {
+    const area = mixedArea();
+    area.children![1]!.gap = 'breaks on </script><script>alert(1)</script>';
+    const html = makeSnapshotHtml(
+      decorateShape({ manifest: { name: 'demo', schemaVersion: 1, areas: ['auth'] }, areas: [area] }),
+    );
+
+    const embedded = html.slice(html.indexOf('window.__SHAPE__='));
+    expect(embedded).not.toContain('</script><script>alert');
+    expect(embedded).toContain('\\u003c/script>');
+  });
+
+  it('serves the same snapshot over /snapshot', async () => {
+    const viewer = await start(fixtureRepo(mixedArea()));
+    const response = await fetch(`${viewer.url}/snapshot`);
+
+    expect(response.headers.get('content-type')).toContain('text/html');
+    const html = await response.text();
+    expect(html).toContain('window.__SHAPE__=');
+    expect(html).toContain('"auth/login"');
   });
 });
 
