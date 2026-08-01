@@ -1,4 +1,4 @@
-import { coverageScore, derivedCoverage, derivedSuspect } from '@appshape/core';
+import { coverageScore, derivedCoverage, derivedSuspect, importanceWeight } from '@appshape/core';
 import type { Coverage, Shape, ShapeNode } from '@appshape/core';
 
 const COMPACT_CODE: Record<Coverage, string> = {
@@ -99,7 +99,12 @@ function renderNode(node: ShapeNode, depth: number, lines: string[], options: Re
     const label = hasChildren ? `${node.title}${percent}` : node.title;
     lines.push(`${indent}${glyph} ${dim}${node.id}${reset} ${label}${importance}${gap}`);
   }
-  for (const child of node.children ?? []) renderNode(child, depth + 1, lines, options);
+  // In filtered views, surface important open work first; the full tree
+  // keeps authored order.
+  const children = options.gapsOnly
+    ? [...(node.children ?? [])].sort((a, b) => importanceWeight(b) - importanceWeight(a))
+    : node.children ?? [];
+  for (const child of children) renderNode(child, depth + 1, lines, options);
 }
 
 /** Orientation block for agent context: usage summary plus compact tree. */
