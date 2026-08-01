@@ -42,6 +42,19 @@ After approval only:
 4. Finish with `shape tree` and report the overall coverage number and the
    top 5 gaps by importance
 
+## Diff mode: re-surveying a mapped repo
+
+When `.shape/` already exists, never propose a fresh tree. Instead:
+
+1. Read the current map (`shape tree --compact`, `shape show` where needed).
+2. Explore as in Phase 1, but focused on what the map does not represent:
+   new subsystems, new user-facing behaviors, removed features.
+3. Propose a delta report only: nodes to ADD (with intent, importance, honest
+   initial coverage), nodes to REMOVE (feature gone from the code), and nodes
+   whose INTENT is stale (code moved past the description). Do not propose
+   coverage changes for existing accurate nodes; that is `shape audit`'s job.
+4. STOP for approval, then apply the approved delta via the CLI.
+
 ## Constraints
 
 - Do not invent aspirational features beyond what the app or user signals;

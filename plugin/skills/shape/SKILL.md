@@ -36,6 +36,28 @@ are the cartographer: the map must reflect the territory after every change.
 Never set coverage on a node with children; parents roll up automatically
 (a parent is covered only when every child is).
 
+## Teammates and subagents
+
+Context injection reaches only the main session loop; spawned teammates never
+see the map. When you delegate feature work to a teammate:
+
+- include the relevant node ids and their intents in the brief
+- require the teammate to report what it built and against which nodes
+- apply the shape updates yourself via the CLI (or have the teammate run
+  `shape set` directly; the CLI is on PATH for the whole session)
+
+## When the human challenges a claim
+
+If the user questions a node ("is X really covered?") or changes what a node
+should mean, re-read the evidence against the current intent and answer
+honestly: confirm with evidence, or demote the coverage and write a specific
+gap note. Changing a node's intent automatically marks it suspect until
+coverage is re-asserted; that flag is the map telling you to re-judge.
+
+Humans may also edit the map directly with the same CLI from a terminal; the
+map's history does not distinguish authors. Never assume a node you did not
+write is wrong; challenge it with evidence like any other claim.
+
 ## Rules
 
 - Never edit `.shape/*.json` directly. The CLI owns validation, locking, and
