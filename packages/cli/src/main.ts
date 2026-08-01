@@ -242,9 +242,10 @@ program
   .command('view')
   .description('open the live visual map in the browser')
   .option('--port <port>', 'port to serve on (default 4820)', (value) => Number.parseInt(value, 10))
-  .action(async (options: { port?: number }) => {
+  .option('--host <host>', 'interface to bind (default 127.0.0.1; use 0.0.0.0 or a LAN address to share)')
+  .action(async (options: { port?: number; host?: string }) => {
     const { startViewer } = await import('@appshape/viewer');
-    const viewer = await startViewer(repoRoot(), options.port);
+    const viewer = await startViewer(repoRoot(), options.port, options.host);
     console.log(`appshape viewer at ${viewer.url}  (ctrl-c to stop)`);
   });
 

@@ -7,9 +7,9 @@ import { loadShape, shapeDirPath } from '@appshape/core';
 import { decorateShape } from './decorate.js';
 
 export const DEFAULT_PORT = 4820;
+export const DEFAULT_HOST = '127.0.0.1';
 const PORT_ATTEMPTS = 21;
 const KEEP_ALIVE_MS = 25_000;
-const HOST = '127.0.0.1';
 
 export interface Viewer {
   url: string;
@@ -23,14 +23,14 @@ export interface Viewer {
  */
 const CLIENT_HTML = join(import.meta.dirname, '..', 'dist', 'client', 'index.html');
 
-export async function startViewer(repoRoot: string, port = DEFAULT_PORT): Promise<Viewer> {
+export async function startViewer(repoRoot: string, port = DEFAULT_PORT, host = DEFAULT_HOST): Promise<Viewer> {
   const html = readFileSync(CLIENT_HTML, 'utf8');
   const clients = new Set<ServerResponse>();
 
   const server = createServer((req, res) => {
     handle(req, res, repoRoot, html, clients);
   });
-  const bound = await listen(server, port);
+  const bound = await listen(server, port, host);
 
   const watcher = watch(shapeDirPath(repoRoot), {
     ignoreInitial: true,
@@ -50,7 +50,7 @@ export async function startViewer(repoRoot: string, port = DEFAULT_PORT): Promis
   keepAlive.unref();
 
   return {
-    url: `http://${HOST}:${bound}`,
+    url: `http://${host}:${bound}`,
     async close(): Promise<void> {
       clearInterval(keepAlive);
       for (const client of clients) client.end();
@@ -113,7 +113,7 @@ function subscribe(req: IncomingMessage, res: ServerResponse, clients: Set<Serve
 }
 
 /** Binds the first free port at or above `port`, giving up after PORT_ATTEMPTS. */
-function listen(server: Server, port: number): Promise<number> {
+function listen(server: Server, port: number, host: string): Promise<number> {
   return new Promise((resolve, reject) => {
     let attempt = 0;
     const onError = (err: NodeJS.ErrnoException): void => {
@@ -122,10 +122,10 @@ function listen(server: Server, port: number): Promise<number> {
         reject(err);
         return;
       }
-      server.listen(port + attempt, HOST);
+      server.listen(port + attempt, host);
     };
     server.on('error', onError);
-    server.listen(port, HOST, () => {
+    server.listen(port, host, () => {
       server.removeListener('error', onError);
       resolve(port + attempt);
     });
