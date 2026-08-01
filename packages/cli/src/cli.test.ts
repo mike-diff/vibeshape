@@ -1,5 +1,5 @@
 import { execFile, execFileSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
@@ -140,6 +140,63 @@ describe('shape CLI', () => {
     }
     expect(output).toContain('SUSPECT auth/login: login.ts no longer exists');
     expect(output).toContain('WARN    auth/oauth-login: covered with no evidence links');
+  });
+
+  it('changing intent on an assessed node marks it suspect until re-assessed', () => {
+    const repo = seededRepo();
+    shape(repo, 'set', 'auth/login', '--coverage', 'covered');
+    const output = shape(repo, 'set', 'auth/login', '--intent', 'WHEN a user logs in THE SYSTEM SHALL also rotate the session token');
+    expect(output).toContain('marked suspect');
+    expect(shape(repo, 'tree', '--compact')).toContain('[C?] auth/login');
+    expect(() => shape(repo, 'audit')).toThrow();
+    shape(repo, 'review', 'auth/login');
+    expect(shape(repo, 'tree', '--compact')).toContain('[C] auth/login');
+  });
+
+  it('re-asserting coverage together with a new intent does not mark suspect', () => {
+    const repo = seededRepo();
+    shape(repo, 'set', 'auth/login', '--coverage', 'covered');
+    shape(repo, 'set', 'auth/login', '--intent', 'WHEN a user logs in THE SYSTEM SHALL create a session', '--coverage', 'partial');
+    expect(shape(repo, 'tree', '--compact')).toContain('[P] auth/login');
+    expect(shape(repo, 'tree', '--compact')).not.toContain('[P?]');
+  });
+
+  it('budget mode collapses covered leaves but keeps area lines and open work', () => {
+    const repo = seededRepo();
+    shape(repo, 'set', 'auth/login', '--coverage', 'covered');
+    shape(repo, 'set', 'auth/oauth-login', '--coverage', 'covered');
+    shape(repo, 'add', '/', '--title', 'Checkout');
+    shape(repo, 'add', 'checkout', '--title', 'Cart');
+    shape(repo, 'set', 'checkout/cart', '--coverage', 'gap', '--gap', 'no cart yet');
+    const budget = shape(repo, 'tree', '--compact', '--budget', '2');
+    expect(budget).toContain('[C] auth Auth');
+    expect(budget).not.toContain('auth/login');
+    expect(budget).toContain('[G] checkout/cart');
+    expect(budget).toContain('budget mode');
+    const full = shape(repo, 'tree', '--compact', '--budget', '100');
+    expect(full).toContain('auth/login');
+    expect(full).not.toContain('budget mode');
+  });
+
+  it('init upserts AGENTS.md only when it already exists', () => {
+    const withAgents = tempRepo();
+    writeFileSync(join(withAgents, 'AGENTS.md'), '# Doctrine\n');
+    shape(withAgents, 'init', '--name', 'demo');
+    expect(readFileSync(join(withAgents, 'AGENTS.md'), 'utf8')).toContain('<!-- APPSHAPE START -->');
+
+    const without = tempRepo();
+    shape(without, 'init', '--name', 'demo');
+    expect(existsSync(join(without, 'AGENTS.md'))).toBe(false);
+    expect(readFileSync(join(without, 'CLAUDE.md'), 'utf8')).toContain('<!-- APPSHAPE START -->');
+  });
+
+  it('snapshot writes a self-contained HTML file with embedded shape data', () => {
+    const repo = seededRepo();
+    shape(repo, 'snapshot');
+    const html = readFileSync(join(repo, '.shape', 'snapshot.html'), 'utf8');
+    expect(html).toContain('window.__SHAPE__');
+    expect(html).toContain('OAuth Login');
+    expect(html).not.toMatch(/src="https?:|href="https?:/);
   });
 
   it('survives concurrent writers without losing adds (advisory lock)', async () => {
