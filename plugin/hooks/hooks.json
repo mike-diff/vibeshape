@@ -9,6 +9,26 @@
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/guard-shape-writes.mjs\""
           }
         ]
+      },
+      {
+        "matcher": "Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/remind-delegation.mjs\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/track-edits.mjs\""
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [

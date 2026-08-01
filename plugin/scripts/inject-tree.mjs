@@ -3,7 +3,7 @@
 // or the last injection is older than REINJECT_MS (agents drift mid-session).
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
@@ -53,17 +53,60 @@ const sessionKey = createHash('sha256')
 const marker = join(tmpdir(), `appshape-${sessionKey}`);
 const treeHash = createHash('sha256').update(tree).digest('hex').slice(0, 16);
 
+// Omission check: edited files (recorded by track-edits.mjs) that no node's
+// evidence references. Nudged at most once per file per session.
+const ledgerPath = join(tmpdir(), `appshape-ledger-${sessionKey}`);
+let omissionNote = '';
+try {
+  const ledger = JSON.parse(readFileSync(ledgerPath, 'utf8'));
+  const pending = Object.keys(ledger).filter((f) => !ledger[f].nudged);
+  if (pending.length > 0) {
+    const referenced = evidencePaths(repoRoot);
+    const unmapped = pending.filter((f) => !referenced.has(f));
+    for (const f of pending) ledger[f].nudged = true;
+    writeFileSync(ledgerPath, JSON.stringify(ledger));
+    if (unmapped.length > 0) {
+      omissionNote =
+        `\nEdited this session but referenced by no shape node: ${unmapped.slice(0, 6).join(', ')}` +
+        `${unmapped.length > 6 ? ` (+${unmapped.length - 6} more)` : ''}. ` +
+        'If user-facing behavior changed, add or update the covering nodes (shape add / shape set --evidence); if not, ignore.';
+    }
+  }
+} catch {
+  // no ledger yet
+}
+
+function evidencePaths(root) {
+  const paths = new Set();
+  const shapeDir = join(root, '.shape');
+  for (const file of readdirSync(shapeDir)) {
+    if (!file.endsWith('.json') || file === 'shape.json') continue;
+    try {
+      collect(JSON.parse(readFileSync(join(shapeDir, file), 'utf8')), paths);
+    } catch {
+      // skip unreadable area files
+    }
+  }
+  return paths;
+}
+
+function collect(node, paths) {
+  for (const e of node.evidence ?? []) paths.add(e.path);
+  for (const child of node.children ?? []) collect(child, paths);
+}
+
 let last = null;
 try {
   last = { hash: readFileSync(marker, 'utf8').trim(), ageMs: Date.now() - statSync(marker).mtimeMs };
 } catch {
   // first injection this session
 }
-if (last && last.hash === treeHash && last.ageMs < REINJECT_MS) process.exit(0);
+if (last && last.hash === treeHash && last.ageMs < REINJECT_MS && !omissionNote) process.exit(0);
 writeFileSync(marker, treeHash);
 
-const context = last
-  ? `Current app shape (consult before choosing work; update affected nodes with the shape CLI):\n${tree}`
-  : shape('prime');
+const context =
+  (last
+    ? `Current app shape (consult before choosing work; update affected nodes with the shape CLI):\n${tree}`
+    : shape('prime')) + omissionNote;
 const eventName = input.hook_event_name === 'SessionStart' ? 'SessionStart' : 'UserPromptSubmit';
 console.log(JSON.stringify({ hookSpecificOutput: { hookEventName: eventName, additionalContext: context } }));
