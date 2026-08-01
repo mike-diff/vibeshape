@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 import { basename } from 'node:path';
-import { Command } from 'commander';
 import {
   COVERAGE_LEVELS,
   IMPORTANCE_LEVELS,
@@ -16,247 +15,236 @@ import {
   suspectNodes,
   updateShape,
 } from '@appshape/core';
-import type { Coverage, Importance } from '@appshape/core';
-import { upsertClaudeMdBlock } from './claudemd.js';
+import {
+  boolFlag,
+  enumFlag,
+  intFlag,
+  listFlag,
+  parseArgs,
+  requireFlag,
+  requirePositionals,
+  strFlag,
+} from './args.js';
+import { upsertGuidanceBlock } from './claudemd.js';
 import { fingerprintEvidence, parseEvidenceSpec } from './evidence.js';
 import { renderPrime, renderShape } from './render.js';
 import { findRepoRoot, gitShortRef, todayISO } from './repo.js';
 
-const program = new Command();
+const FLAG_SPEC = {
+  value: ['name', 'area', 'budget', 'title', 'id', 'intent', 'importance', 'coverage', 'gap', 'evidence', 'port', 'host', 'out'],
+  boolean: ['compact', 'gaps', 'clear-gap', 'clear-evidence', 'force', 'help'],
+};
 
-program
-  .name('shape')
-  .description('appshape: a living coverage map for agent-built apps')
-  .option('--dir <path>', 'repo directory (default: walk up from cwd)', process.cwd());
+const USAGE = `appshape: a living coverage map for agent-built apps
 
-function repoRoot(): string {
-  return findRepoRoot(program.opts<{ dir: string }>().dir);
-}
+usage: shape [--dir <path>] <command>
 
-function collect(value: string, previous: string[]): string[] {
-  return [...previous, value];
-}
+  init [--name <name>]                    scaffold .shape/ plus CLAUDE.md/AGENTS.md guidance
+  tree [--compact] [--gaps] [--area <slug>] [--budget <n>]
+                                          render the map (budget: degrade to areas + gaps past n nodes)
+  show <id>                               full node detail plus derived status
+  add <parent> --title <t> [--id <slug>] [--intent <ears>] [--importance core|high|normal|low]
+                                          add a node (/ as parent creates a top-level area)
+  set <id> [--coverage <level>] [--gap <text>] [--clear-gap] [--title <t>] [--intent <ears>]
+           [--importance <level>] [--evidence type:path[#name]]... [--clear-evidence]
+                                          update a node; --coverage stamps the assessment
+  rm <id> [--force]                       remove a node or subtree
+  mv <id> <new-parent>                    move a subtree (ids rewritten)
+  audit                                   flag drifted claims suspect; nonzero exit if any remain
+  review <id>                             clear suspect after re-assessing
+  snapshot [--out <file>]                 write a self-contained HTML snapshot of the map
+  view [--port <port>] [--host <host>]    live visual map in the browser
+  prime                                   orientation block for agent context`;
 
-function enumOption<T extends string>(name: string, allowed: readonly T[]): (value: string) => T {
-  return (value) => {
-    if (!allowed.includes(value as T)) {
-      throw new Error(`invalid ${name} "${value}" (allowed: ${allowed.join(', ')})`);
+async function run(argv: string[]): Promise<void> {
+  const parsed = parseArgs(argv, FLAG_SPEC);
+  const dir = strFlag(parsed, 'dir') ?? process.cwd();
+  const repoRoot = (): string => findRepoRoot(dir);
+
+  switch (parsed.command) {
+    case 'init': {
+      const name = strFlag(parsed, 'name') ?? basename(dir);
+      initShape(dir, name);
+      const claudeMd = upsertGuidanceBlock(dir, 'CLAUDE.md', { createIfMissing: true });
+      const agentsMd = upsertGuidanceBlock(dir, 'AGENTS.md', { createIfMissing: false });
+      console.log(`initialized .shape/ for "${name}" (CLAUDE.md: ${claudeMd}, AGENTS.md: ${agentsMd})`);
+      console.log('add your first area:  shape add / --title "Checkout"');
+      return;
     }
-    return value as T;
-  };
-}
-
-program
-  .command('init')
-  .description('scaffold a .shape/ folder in the current directory')
-  .option('--name <name>', 'app name (default: directory basename)')
-  .action((options: { name?: string }) => {
-    const dir = program.opts<{ dir: string }>().dir;
-    const name = options.name ?? basename(dir);
-    initShape(dir, name);
-    const claudeMd = upsertClaudeMdBlock(dir);
-    console.log(`initialized .shape/ for "${name}" (${claudeMd} CLAUDE.md guidance)`);
-    console.log('add your first area:  shape add / --title "Checkout"');
-  });
-
-program
-  .command('tree')
-  .description('render the shape tree')
-  .option('--compact', 'plain, token-efficient output for agent context')
-  .option('--gaps', 'only nodes that are not covered (or are suspect)')
-  .option('--area <slug>', 'limit to one top-level area')
-  .action((options: { compact?: boolean; gaps?: boolean; area?: string }) => {
-    const shape = loadShape(repoRoot());
-    console.log(
-      renderShape(shape, {
-        compact: options.compact,
-        gapsOnly: options.gaps,
-        area: options.area,
-        color: !options.compact && process.stdout.isTTY,
-      }),
-    );
-  });
-
-program
-  .command('show')
-  .description('full detail for one node')
-  .argument('<id>', 'node id, e.g. auth/oauth-login')
-  .action((id: string) => {
-    const shape = loadShape(repoRoot());
-    const node = findNode(shape, id);
-    if (!node) throw new Error(`node "${id}" not found`);
-    const { children, ...detail } = node;
-    console.log(
-      JSON.stringify(
-        {
-          ...detail,
-          derived: {
-            coverage: derivedCoverage(node),
-            percent: Math.round(coverageScore(node) * 100),
+    case 'tree': {
+      const shape = loadShape(repoRoot());
+      console.log(
+        renderShape(shape, {
+          compact: boolFlag(parsed, 'compact'),
+          gapsOnly: boolFlag(parsed, 'gaps'),
+          area: strFlag(parsed, 'area'),
+          budgetNodes: intFlag(parsed, 'budget'),
+          color: !boolFlag(parsed, 'compact') && process.stdout.isTTY,
+        }),
+      );
+      return;
+    }
+    case 'show': {
+      const [id] = requirePositionals(parsed, ['id']);
+      const shape = loadShape(repoRoot());
+      const node = findNode(shape, id!);
+      if (!node) throw new Error(`node "${id}" not found`);
+      const { children, ...detail } = node;
+      console.log(
+        JSON.stringify(
+          {
+            ...detail,
+            derived: { coverage: derivedCoverage(node), percent: Math.round(coverageScore(node) * 100) },
+            children: (children ?? []).map((c) => `${c.id} (${derivedCoverage(c)})`),
           },
-          children: (children ?? []).map((c) => `${c.id} (${derivedCoverage(c)})`),
-        },
-        null,
-        2,
-      ),
-    );
-  });
-
-program
-  .command('add')
-  .description('add a node ("/" as parent creates a new top-level area)')
-  .argument('<parent>', 'parent node id, or / for a new area')
-  .requiredOption('--title <title>', 'node title')
-  .option('--id <slug>', 'slug override (default: derived from title)')
-  .option('--intent <intent>', 'EARS-style intent statement')
-  .option('--importance <level>', `one of: ${IMPORTANCE_LEVELS.join(', ')}`, enumOption('importance', IMPORTANCE_LEVELS))
-  .action((parent: string, options: { title: string; id?: string; intent?: string; importance?: Importance }) => {
-    let createdId = '';
-    updateShape(repoRoot(), (shape) => {
-      createdId = addNode(shape, parent, {
-        title: options.title,
-        slug: options.id,
-        intent: options.intent,
-        importance: options.importance,
-      }).id;
-    });
-    console.log(`added ${createdId}`);
-  });
-
-program
-  .command('set')
-  .description('update a node; setting --coverage stamps the assessment date and git ref')
-  .argument('<id>', 'node id')
-  .option('--coverage <level>', `one of: ${COVERAGE_LEVELS.join(', ')}`, enumOption('coverage', COVERAGE_LEVELS))
-  .option('--gap <text>', 'what is missing or weak')
-  .option('--clear-gap', 'remove the gap note')
-  .option('--title <title>')
-  .option('--intent <intent>')
-  .option('--importance <level>', `one of: ${IMPORTANCE_LEVELS.join(', ')}`, enumOption('importance', IMPORTANCE_LEVELS))
-  .option('--evidence <spec>', 'type:path or type:path#name (repeatable, replaces prior evidence)', collect, [])
-  .option('--clear-evidence', 'remove all evidence')
-  .action((id: string, options: {
-    coverage?: Coverage;
-    gap?: string;
-    clearGap?: boolean;
-    title?: string;
-    intent?: string;
-    importance?: Importance;
-    evidence: string[];
-    clearEvidence?: boolean;
-  }) => {
-    const root = repoRoot();
-    updateShape(root, (shape) => {
-      const node = findNode(shape, id);
-      if (!node) throw new Error(`node "${id}" not found`);
-      if ((node.children?.length ?? 0) > 0 && options.coverage) {
-        throw new Error(`"${id}" has children - coverage is derived; set it on leaves`);
+          null,
+          2,
+        ),
+      );
+      return;
+    }
+    case 'add': {
+      const [parent] = requirePositionals(parsed, ['parent']);
+      const title = requireFlag(parsed, 'title');
+      let createdId = '';
+      updateShape(repoRoot(), (shape) => {
+        createdId = addNode(shape, parent!, {
+          title,
+          slug: strFlag(parsed, 'id'),
+          intent: strFlag(parsed, 'intent'),
+          importance: enumFlag(parsed, 'importance', IMPORTANCE_LEVELS),
+        }).id;
+      });
+      console.log(`added ${createdId}`);
+      return;
+    }
+    case 'set': {
+      const [id] = requirePositionals(parsed, ['id']);
+      const root = repoRoot();
+      const coverage = enumFlag(parsed, 'coverage', COVERAGE_LEVELS);
+      const importance = enumFlag(parsed, 'importance', IMPORTANCE_LEVELS);
+      const intent = strFlag(parsed, 'intent');
+      const evidence = listFlag(parsed, 'evidence');
+      let becameSuspect = false;
+      updateShape(root, (shape) => {
+        const node = findNode(shape, id!);
+        if (!node) throw new Error(`node "${id}" not found`);
+        if ((node.children?.length ?? 0) > 0 && coverage) {
+          throw new Error(`"${id}" has children - coverage is derived; set it on leaves`);
+        }
+        const title = strFlag(parsed, 'title');
+        if (title) node.title = title;
+        if (intent) {
+          // A coverage verdict was judged against the old intent; a new intent
+          // invalidates it until re-assessed (unless this call re-asserts coverage).
+          if (!coverage && node.coverage && node.coverage !== 'missing') {
+            node.suspect = true;
+            becameSuspect = true;
+          }
+          node.intent = intent;
+        }
+        if (importance) node.importance = importance;
+        const gap = strFlag(parsed, 'gap');
+        if (gap) node.gap = gap;
+        if (boolFlag(parsed, 'clear-gap')) delete node.gap;
+        if (boolFlag(parsed, 'clear-evidence')) delete node.evidence;
+        if (evidence.length > 0) {
+          node.evidence = fingerprintEvidence(root, evidence.map(parseEvidenceSpec));
+        }
+        if (coverage) {
+          node.coverage = coverage;
+          delete node.suspect;
+          node.assessed = { at: todayISO(), gitRef: gitShortRef(root) };
+        }
+      });
+      console.log(`updated ${id}${becameSuspect ? ' (marked suspect: intent changed, coverage needs re-assessment)' : ''}`);
+      return;
+    }
+    case 'rm': {
+      const [id] = requirePositionals(parsed, ['id']);
+      updateShape(repoRoot(), (shape) => {
+        const node = findNode(shape, id!);
+        if (!node) throw new Error(`node "${id}" not found`);
+        if ((node.children?.length ?? 0) > 0 && !boolFlag(parsed, 'force')) {
+          throw new Error(`"${id}" has ${node.children!.length} children - pass --force to remove the subtree`);
+        }
+        removeNode(shape, id!);
+      });
+      console.log(`removed ${id}`);
+      return;
+    }
+    case 'mv': {
+      const [id, newParent] = requirePositionals(parsed, ['id', 'new-parent']);
+      let movedId = '';
+      updateShape(repoRoot(), (shape) => {
+        movedId = moveNode(shape, id!, newParent!).id;
+      });
+      console.log(`moved to ${movedId}`);
+      return;
+    }
+    case 'audit': {
+      const root = repoRoot();
+      let findings: ReturnType<typeof auditShape> = [];
+      let suspects = 0;
+      updateShape(root, (shape) => {
+        findings = auditShape(root, shape);
+        suspects = suspectNodes(shape).length;
+      });
+      for (const finding of findings) {
+        console.log(`${finding.kind === 'drifted' ? 'SUSPECT' : 'WARN   '} ${finding.id}: ${finding.detail}`);
       }
-      if (options.title) node.title = options.title;
-      if (options.intent) node.intent = options.intent;
-      if (options.importance) node.importance = options.importance;
-      if (options.gap) node.gap = options.gap;
-      if (options.clearGap) delete node.gap;
-      if (options.clearEvidence) delete node.evidence;
-      if (options.evidence.length > 0) {
-        node.evidence = fingerprintEvidence(root, options.evidence.map(parseEvidenceSpec));
+      if (suspects > 0) {
+        console.log(`${suspects} suspect node(s) - re-assess against the code, then run: shape review <id>`);
+        process.exitCode = 1;
+      } else {
+        console.log(`audit clean${findings.length > 0 ? ` (${findings.length} warning(s))` : ''}`);
       }
-      if (options.coverage) {
-        node.coverage = options.coverage;
+      return;
+    }
+    case 'review': {
+      const [id] = requirePositionals(parsed, ['id']);
+      const root = repoRoot();
+      updateShape(root, (shape) => {
+        const node = findNode(shape, id!);
+        if (!node) throw new Error(`node "${id}" not found`);
         delete node.suspect;
+        if (node.evidence) node.evidence = fingerprintEvidence(root, node.evidence);
         node.assessed = { at: todayISO(), gitRef: gitShortRef(root) };
-      }
-    });
-    console.log(`updated ${id}`);
-  });
-
-program
-  .command('rm')
-  .description('remove a node (and its subtree)')
-  .argument('<id>', 'node id')
-  .option('--force', 'required when the node has children')
-  .action((id: string, options: { force?: boolean }) => {
-    updateShape(repoRoot(), (shape) => {
-      const node = findNode(shape, id);
-      if (!node) throw new Error(`node "${id}" not found`);
-      if ((node.children?.length ?? 0) > 0 && !options.force) {
-        throw new Error(`"${id}" has ${node.children!.length} children - pass --force to remove the subtree`);
-      }
-      removeNode(shape, id);
-    });
-    console.log(`removed ${id}`);
-  });
-
-program
-  .command('mv')
-  .description('move a node (and its subtree) under a new parent')
-  .argument('<id>', 'node id')
-  .argument('<new-parent>', 'new parent node id')
-  .action((id: string, newParent: string) => {
-    let movedId = '';
-    updateShape(repoRoot(), (shape) => {
-      movedId = moveNode(shape, id, newParent).id;
-    });
-    console.log(`moved to ${movedId}`);
-  });
-
-program
-  .command('audit')
-  .description('flag coverage claims whose evidence drifted; nonzero exit if any suspects remain')
-  .action(() => {
-    const root = repoRoot();
-    let findings: ReturnType<typeof auditShape> = [];
-    let suspects = 0;
-    updateShape(root, (shape) => {
-      findings = auditShape(root, shape);
-      suspects = suspectNodes(shape).length;
-    });
-    for (const finding of findings) {
-      console.log(`${finding.kind === 'drifted' ? 'SUSPECT' : 'WARN   '} ${finding.id}: ${finding.detail}`);
+      });
+      console.log(`reviewed ${id} - suspect cleared, evidence re-fingerprinted`);
+      return;
     }
-    if (suspects > 0) {
-      console.log(`${suspects} suspect node(s) - re-assess against the code, then run: shape review <id>`);
-      process.exitCode = 1;
-    } else {
-      console.log(`audit clean${findings.length > 0 ? ` (${findings.length} warning(s))` : ''}`);
+    case 'snapshot': {
+      const root = repoRoot();
+      const { decorateShape, makeSnapshotHtml } = await import('@appshape/viewer');
+      const { writeFileSync } = await import('node:fs');
+      const { join } = await import('node:path');
+      const out = strFlag(parsed, 'out') ?? join(root, '.shape', 'snapshot.html');
+      writeFileSync(out, makeSnapshotHtml(decorateShape(loadShape(root))));
+      console.log(`snapshot written to ${out}`);
+      return;
     }
-  });
+    case 'view': {
+      const { startViewer } = await import('@appshape/viewer');
+      const viewer = await startViewer(repoRoot(), intFlag(parsed, 'port'), strFlag(parsed, 'host'));
+      console.log(`appshape viewer at ${viewer.url}  (ctrl-c to stop)`);
+      return;
+    }
+    case 'prime': {
+      console.log(renderPrime(loadShape(repoRoot())));
+      return;
+    }
+    case '':
+    case 'help': {
+      console.log(USAGE);
+      return;
+    }
+    default:
+      throw new Error(`unknown command "${parsed.command}" (run shape help)`);
+  }
+}
 
-program
-  .command('review')
-  .description('clear a suspect flag after re-assessing: re-fingerprints evidence and re-stamps the assessment')
-  .argument('<id>', 'node id')
-  .action((id: string) => {
-    const root = repoRoot();
-    updateShape(root, (shape) => {
-      const node = findNode(shape, id);
-      if (!node) throw new Error(`node "${id}" not found`);
-      delete node.suspect;
-      if (node.evidence) node.evidence = fingerprintEvidence(root, node.evidence);
-      node.assessed = { at: todayISO(), gitRef: gitShortRef(root) };
-    });
-    console.log(`reviewed ${id} - suspect cleared, evidence re-fingerprinted`);
-  });
-
-program
-  .command('view')
-  .description('open the live visual map in the browser')
-  .option('--port <port>', 'port to serve on (default 4820)', (value) => Number.parseInt(value, 10))
-  .option('--host <host>', 'interface to bind (default 127.0.0.1; use 0.0.0.0 or a LAN address to share)')
-  .action(async (options: { port?: number; host?: string }) => {
-    const { startViewer } = await import('@appshape/viewer');
-    const viewer = await startViewer(repoRoot(), options.port, options.host);
-    console.log(`appshape viewer at ${viewer.url}  (ctrl-c to stop)`);
-  });
-
-program
-  .command('prime')
-  .description('orientation block for agent context: usage plus compact tree')
-  .action(() => {
-    console.log(renderPrime(loadShape(repoRoot())));
-  });
-
-program.parseAsync().catch((error: unknown) => {
+run(process.argv.slice(2)).catch((error: unknown) => {
   console.error(`shape: ${error instanceof Error ? error.message : String(error)}`);
   process.exitCode = 1;
 });
