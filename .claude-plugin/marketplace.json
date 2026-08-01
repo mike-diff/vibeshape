@@ -1,0 +1,13 @@
+{
+  "name": "appshape",
+  "owner": {
+    "name": "mike-diff"
+  },
+  "plugins": [
+    {
+      "name": "appshape",
+      "source": "./plugin",
+      "description": "Living coverage map for agent-built apps: consult, maintain, and audit the .shape/ tree"
+    }
+  ]
+}
