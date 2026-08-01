@@ -1,6 +1,6 @@
 import { mkdirSync, readdirSync, readFileSync, renameSync, rmdirSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { manifestSchema, nodeSchema, validateAreaTree } from './schema.js';
+import { parseManifest, parseNode, validateAreaTree } from './schema.js';
 import { serializeArea, serializeManifest } from './serialize.js';
 import type { Manifest, Shape, ShapeNode } from './types.js';
 
@@ -33,9 +33,9 @@ export function initShape(repoRoot: string, name: string): Shape {
 
 export function loadShape(repoRoot: string): Shape {
   const dir = shapeDirPath(repoRoot);
-  const manifest = parseFile<Manifest>(join(dir, MANIFEST_FILE), (raw) => manifestSchema.parse(raw));
+  const manifest = parseFile<Manifest>(join(dir, MANIFEST_FILE), parseManifest);
   const areas = manifest.areas.map((slug) => {
-    const root = parseFile<ShapeNode>(join(dir, `${slug}.json`), (raw) => nodeSchema.parse(raw));
+    const root = parseFile<ShapeNode>(join(dir, `${slug}.json`), parseNode);
     const errors = validateAreaTree(root, slug);
     if (errors.length > 0) {
       throw new Error(`invalid area "${slug}": ${errors.join('; ')}`);
