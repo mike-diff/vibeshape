@@ -39,7 +39,9 @@ function shape(...args) {
 
 let tree;
 try {
-  tree = shape('tree', '--compact');
+  // Budget mode: past 120 nodes the render degrades to area lines plus open
+  // work, keeping per-prompt injection cost flat on large maps.
+  tree = shape('tree', '--compact', '--budget', '120');
 } catch {
   process.exit(0); // never block the prompt on a broken shape
 }
