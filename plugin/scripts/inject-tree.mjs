@@ -1,13 +1,18 @@
 // UserPromptSubmit + SessionStart: inject the compact shape tree into context.
 // Gated: full orientation once per session, then only when the tree changed
 // or the last injection is older than REINJECT_MS (agents drift mid-session).
-import { execFileSync } from 'node:child_process';
+// Uses the plugin lib directly (no child process) to keep hook latency low.
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { appendFileSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { join } from 'node:path';
+import { findShapeRootOrNull } from '../lib/repo.mjs';
+import { loadShape } from '../lib/store.mjs';
+import { renderPrime, renderShape } from '../lib/render.mjs';
+import { walk } from '../lib/tree.mjs';
 
 const REINJECT_MS = 10 * 60_000;
+const BUDGET_NODES = 120;
 
 let input = {};
 try {
@@ -16,32 +21,14 @@ try {
   // no stdin - proceed with env fallbacks
 }
 
-let dir = input.cwd || process.env.CLAUDE_PROJECT_DIR || process.cwd();
-let repoRoot = null;
-for (;;) {
-  if (existsSync(join(dir, '.shape', 'shape.json'))) {
-    repoRoot = dir;
-    break;
-  }
-  const parent = dirname(dir);
-  if (parent === dir) break;
-  dir = parent;
-}
+const repoRoot = findShapeRootOrNull(input.cwd || process.env.CLAUDE_PROJECT_DIR || process.cwd());
 if (!repoRoot) process.exit(0);
 
-const pluginRoot = process.argv[2] ?? process.env.CLAUDE_PLUGIN_ROOT;
-if (!pluginRoot) process.exit(0);
-const shapeBin = join(pluginRoot, 'bin', 'shape');
-
-function shape(...args) {
-  return execFileSync(shapeBin, ['--dir', repoRoot, ...args], { encoding: 'utf8' });
-}
-
+let shape;
 let tree;
 try {
-  // Budget mode: past 120 nodes the render degrades to area lines plus open
-  // work, keeping per-prompt injection cost flat on large maps.
-  tree = shape('tree', '--compact', '--budget', '120');
+  shape = loadShape(repoRoot);
+  tree = renderShape(shape, { compact: true, budgetNodes: BUDGET_NODES });
 } catch {
   process.exit(0); // never block the prompt on a broken shape
 }
@@ -54,47 +41,40 @@ const marker = join(tmpdir(), `appshape-${sessionKey}`);
 const treeHash = createHash('sha256').update(tree).digest('hex').slice(0, 16);
 
 // Omission check: edited files (recorded by track-edits.mjs) that no node's
-// evidence references. Nudged at most once per file per session.
-// UserPromptSubmit only: on resume, SessionStart and UserPromptSubmit run
-// concurrently and would both deliver the nudge before either marks it.
-const ledgerPath = join(tmpdir(), `appshape-ledger-${sessionKey}`);
+// evidence references. Ledger is append-only lines; a "!path" line marks a
+// path as already nudged. UserPromptSubmit only: on resume, SessionStart and
+// UserPromptSubmit run concurrently and would both deliver the nudge.
+const ledgerPath = join(tmpdir(), `appshape-edits-${sessionKey}`);
 let omissionNote = '';
-if (input.hook_event_name === 'UserPromptSubmit') try {
-  const ledger = JSON.parse(readFileSync(ledgerPath, 'utf8'));
-  const pending = Object.keys(ledger).filter((f) => !ledger[f].nudged);
-  if (pending.length > 0) {
-    const referenced = evidencePaths(repoRoot);
-    const unmapped = pending.filter((f) => !referenced.has(f));
-    for (const f of pending) ledger[f].nudged = true;
-    writeFileSync(ledgerPath, JSON.stringify(ledger));
-    if (unmapped.length > 0) {
-      omissionNote =
-        `\nEdited this session but referenced by no shape node: ${unmapped.slice(0, 6).join(', ')}` +
-        `${unmapped.length > 6 ? ` (+${unmapped.length - 6} more)` : ''}. ` +
-        'If user-facing behavior changed, add or update the covering nodes (shape add / shape set --evidence); if not, ignore.';
+if (input.hook_event_name === 'UserPromptSubmit') {
+  try {
+    const lines = readFileSync(ledgerPath, 'utf8').split('\n').filter(Boolean);
+    const handled = new Set(lines.filter((l) => l.startsWith('!')).map((l) => l.slice(1)));
+    const pending = [...new Set(lines.filter((l) => !l.startsWith('!')))].filter((f) => !handled.has(f));
+    if (pending.length > 0) {
+      const referenced = evidencePaths(shape);
+      const unmapped = pending.filter((f) => !referenced.has(f));
+      appendFileSync(ledgerPath, pending.map((f) => `!${f}\n`).join(''));
+      if (unmapped.length > 0) {
+        omissionNote =
+          `\nEdited this session but referenced by no shape node: ${unmapped.slice(0, 6).join(', ')}` +
+          `${unmapped.length > 6 ? ` (+${unmapped.length - 6} more)` : ''}. ` +
+          'If user-facing behavior changed, add or update the covering nodes (shape add / shape set --evidence); if not, ignore.';
+      }
     }
+  } catch {
+    // no ledger yet
   }
-} catch {
-  // no ledger yet
 }
 
-function evidencePaths(root) {
+function evidencePaths(loaded) {
   const paths = new Set();
-  const shapeDir = join(root, '.shape');
-  for (const file of readdirSync(shapeDir)) {
-    if (!file.endsWith('.json') || file === 'shape.json') continue;
-    try {
-      collect(JSON.parse(readFileSync(join(shapeDir, file), 'utf8')), paths);
-    } catch {
-      // skip unreadable area files
-    }
+  for (const area of loaded.areas) {
+    walk(area, (node) => {
+      for (const e of node.evidence ?? []) paths.add(e.path);
+    });
   }
   return paths;
-}
-
-function collect(node, paths) {
-  for (const e of node.evidence ?? []) paths.add(e.path);
-  for (const child of node.children ?? []) collect(child, paths);
 }
 
 let last = null;
@@ -109,6 +89,6 @@ writeFileSync(marker, treeHash);
 const context =
   (last
     ? `Current app shape (consult before choosing work; update affected nodes with the shape CLI):\n${tree}`
-    : shape('prime')) + omissionNote;
+    : renderPrime(shape)) + omissionNote;
 const eventName = input.hook_event_name === 'SessionStart' ? 'SessionStart' : 'UserPromptSubmit';
 console.log(JSON.stringify({ hookSpecificOutput: { hookEventName: eventName, additionalContext: context } }));

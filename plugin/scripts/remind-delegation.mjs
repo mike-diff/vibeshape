@@ -1,7 +1,7 @@
 // PreToolUse (Task): subagents never receive the shape injection, so remind
 // the lead at the exact delegation moment to carry the map into the brief.
-import { existsSync, readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { readFileSync } from 'node:fs';
+import { findShapeRootOrNull } from '../lib/repo.mjs';
 
 let input = {};
 try {
@@ -10,18 +10,7 @@ try {
   process.exit(0);
 }
 
-let dir = input.cwd || process.env.CLAUDE_PROJECT_DIR || process.cwd();
-let found = false;
-for (;;) {
-  if (existsSync(join(dir, '.shape', 'shape.json'))) {
-    found = true;
-    break;
-  }
-  const parent = dirname(dir);
-  if (parent === dir) break;
-  dir = parent;
-}
-if (!found) process.exit(0);
+if (!findShapeRootOrNull(input.cwd || process.env.CLAUDE_PROJECT_DIR || process.cwd())) process.exit(0);
 
 console.log(
   JSON.stringify({

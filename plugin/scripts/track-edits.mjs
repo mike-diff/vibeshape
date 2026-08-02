@@ -1,10 +1,12 @@
 // PostToolUse (Write|Edit|MultiEdit): record edited files into a session
 // ledger so the injector can flag edits that no shape node references.
 // The audit verifies claims made; this closes the omission side.
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+// Append-only: parallel hook invocations must never lose each other's lines.
+import { appendFileSync, readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
-import { dirname, join, relative } from 'node:path';
+import { join, relative } from 'node:path';
+import { findShapeRootOrNull } from '../lib/repo.mjs';
 
 let input = {};
 try {
@@ -16,17 +18,7 @@ try {
 const filePath = input.tool_input?.file_path;
 if (!filePath) process.exit(0);
 
-let dir = input.cwd || process.env.CLAUDE_PROJECT_DIR || process.cwd();
-let repoRoot = null;
-for (;;) {
-  if (existsSync(join(dir, '.shape', 'shape.json'))) {
-    repoRoot = dir;
-    break;
-  }
-  const parent = dirname(dir);
-  if (parent === dir) break;
-  dir = parent;
-}
+const repoRoot = findShapeRootOrNull(input.cwd || process.env.CLAUDE_PROJECT_DIR || process.cwd());
 if (!repoRoot) process.exit(0);
 
 const rel = relative(repoRoot, filePath);
@@ -36,14 +28,4 @@ const sessionKey = createHash('sha256')
   .update(`${repoRoot}\n${input.session_id ?? ''}`)
   .digest('hex')
   .slice(0, 16);
-const ledgerPath = join(tmpdir(), `appshape-ledger-${sessionKey}`);
-let ledger = {};
-try {
-  ledger = JSON.parse(readFileSync(ledgerPath, 'utf8'));
-} catch {
-  // first edit this session
-}
-if (ledger[rel] === undefined) {
-  ledger[rel] = { nudged: false };
-  writeFileSync(ledgerPath, JSON.stringify(ledger));
-}
+appendFileSync(join(tmpdir(), `appshape-edits-${sessionKey}`), `${rel}\n`);
