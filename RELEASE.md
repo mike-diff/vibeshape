@@ -20,7 +20,7 @@ the rest are release operations.
 
 ## Documentation
 
-- [ ] README for strangers: concepts section (map vs tasks vs specs, coverage
+- [ ] README for strangers: expand the brief How it works into a full concepts section (map vs tasks vs specs, coverage
       semantics, honesty machinery), a 60-second quickstart, FAQ (why a CLI
       gate, why read-only viewer, what suspect means), limitations stated
       plainly (coverage judgments are assessments against intents; only
@@ -36,7 +36,7 @@ the rest are release operations.
 
 - [ ] LICENSE (MIT) and copyright line
 - [ ] CI: GitHub Actions running `node --test tests/*.test.mjs` on push,
-      Node 20/22/24 matrix (no install step needed)
+      Node 20.11+/22/24 matrix (no install step needed; import.meta.dirname sets the 20.11 floor)
 - [ ] Name check: search for collisions on "appshape" and `.shape/` before
       the name is public
 - [ ] Public repo `mike-diff/appshape`, topics, description, social preview

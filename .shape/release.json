@@ -8,7 +8,7 @@
       "title": "Public README",
       "intent": "WHEN a stranger lands on the repo THE SYSTEM SHALL explain concepts, quickstart, FAQ, limitations, uninstall, and privacy in one read",
       "coverage": "gap",
-      "gap": "README covers quickstart and layout; concepts, FAQ, limitations, uninstall, and privacy sections missing (see RELEASE.md)",
+      "gap": "How it works covers basics; full concepts treatment, FAQ, limitations, uninstall, and privacy sections missing (see RELEASE.md)",
       "importance": "high",
       "assessed": {
         "at": "2026-08-02",
