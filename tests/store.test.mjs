@@ -43,12 +43,13 @@ describe('store round-trip', () => {
       addNode(shape, '/', { title: 'Auth' });
       addNode(shape, '/', { title: 'Checkout' });
     });
-    assert.deepEqual(readdirSync(join(repo, '.shape')).sort(), ['auth.json', 'checkout.json', 'shape.json']);
+    const jsonFiles = () => readdirSync(join(repo, '.shape')).filter((f) => f.endsWith('.json')).sort();
+    assert.deepEqual(jsonFiles(), ['auth.json', 'checkout.json', 'shape.json']);
     updateShape(repo, (shape) => {
       shape.areas = shape.areas.filter((a) => a.id !== 'checkout');
       shape.manifest.areas = shape.manifest.areas.filter((a) => a !== 'checkout');
     });
-    assert.deepEqual(readdirSync(join(repo, '.shape')).sort(), ['auth.json', 'shape.json']);
+    assert.deepEqual(jsonFiles(), ['auth.json', 'shape.json']);
   });
 
   it('serializes deterministically: a load/save cycle is byte-identical', () => {

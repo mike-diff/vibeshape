@@ -3,6 +3,18 @@ import { existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { SHAPE_DIR } from './store.mjs';
 /** Walks up from `start` to find the directory containing `.shape/`. */
+/** Nearest ancestor (or `start` itself) containing a map, or null. */
+export function findShapeRootOrNull(start) {
+    let dir = resolve(start);
+    for (;;) {
+        if (existsSync(join(dir, SHAPE_DIR, 'shape.json')))
+            return dir;
+        const parent = dirname(dir);
+        if (parent === dir)
+            return null;
+        dir = parent;
+    }
+}
 export function findRepoRoot(start) {
     let dir = resolve(start);
     for (;;) {

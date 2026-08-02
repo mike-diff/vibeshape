@@ -25,6 +25,8 @@ export function initShape(repoRoot, name) {
     mkdirSync(dir, { recursive: true });
     const shape = { manifest: { name, schemaVersion: 1, areas: [] }, areas: [] };
     atomicWrite(join(dir, MANIFEST_FILE), serializeManifest(shape.manifest));
+    // Generated files stay out of version control.
+    atomicWrite(join(dir, '.gitignore'), 'snapshot.html\n.lock/\n*.tmp-*\n');
     return shape;
 }
 export function loadShape(repoRoot) {

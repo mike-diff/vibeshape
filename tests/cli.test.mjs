@@ -1,7 +1,7 @@
 import { afterEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFile, execFileSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
@@ -236,6 +236,23 @@ describe('shape CLI', () => {
     }
     assert.ok(output.includes('SUSPECT auth/login: login.ts no longer exists'));
     assert.ok(output.includes('WARN    auth/oauth-login: covered with no evidence links'));
+  });
+
+  it('init refuses to create a nested map inside an existing one', () => {
+    const repo = tempRepo();
+    shape(repo, 'init', '--name', 'outer');
+    const sub = join(repo, 'packages', 'web');
+    mkdirSync(sub, { recursive: true });
+    assert.throws(() => shape(sub, 'init', '--name', 'inner'), /already inside the appshape map/);
+    assert.equal(existsSync(join(sub, '.shape')), false);
+  });
+
+  it('init writes a .shape/.gitignore covering generated files', () => {
+    const repo = tempRepo();
+    shape(repo, 'init', '--name', 'demo');
+    const ignore = readFileSync(join(repo, '.shape', '.gitignore'), 'utf8');
+    assert.ok(ignore.includes('snapshot.html'));
+    assert.ok(ignore.includes('.lock/'));
   });
 
   it('survives concurrent writers without losing adds (advisory lock)', async () => {

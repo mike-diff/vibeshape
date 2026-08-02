@@ -9,7 +9,7 @@ import { boolFlag, enumFlag, intFlag, listFlag, parseArgs, requireFlag, requireP
 import { upsertGuidanceBlock } from '../lib/claudemd.mjs';
 import { fingerprintEvidence, parseEvidenceSpec } from '../lib/evidence.mjs';
 import { renderPrime, renderShape } from '../lib/render.mjs';
-import { findRepoRoot, gitShortRef, todayISO } from '../lib/repo.mjs';
+import { findRepoRoot, findShapeRootOrNull, gitShortRef, todayISO } from '../lib/repo.mjs';
 const FLAG_SPEC = {
     value: ['name', 'area', 'budget', 'title', 'id', 'intent', 'importance', 'coverage', 'gap', 'evidence', 'port', 'host', 'out'],
     boolean: ['compact', 'gaps', 'clear-gap', 'clear-evidence', 'force', 'help'],
@@ -40,6 +40,10 @@ async function run(argv) {
     const repoRoot = () => findRepoRoot(dir);
     switch (parsed.command) {
         case 'init': {
+            const ancestor = findShapeRootOrNull(dir);
+            if (ancestor !== null) {
+                throw new Error(`already inside the appshape map at ${ancestor} - run shape there, or init a directory outside it`);
+            }
             const name = strFlag(parsed, 'name') ?? basename(dir);
             initShape(dir, name);
             const claudeMd = upsertGuidanceBlock(dir, 'CLAUDE.md', { createIfMissing: true });
