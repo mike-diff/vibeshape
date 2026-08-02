@@ -84,7 +84,7 @@ describe('validation on load', () => {
     });
     const areaFile = join(repo, '.shape', 'auth.json');
     writeFileSync(areaFile, readFileSync(areaFile, 'utf8').replace('"title": "Auth"', '"title": "Auth", "coverage": "done"'));
-    assert.throws(() => loadShape(repo));
+    assert.throws(() => loadShape(repo), /coverage: must be one of/);
   });
 
   it('rejects a child whose id does not extend its parent path', () => {

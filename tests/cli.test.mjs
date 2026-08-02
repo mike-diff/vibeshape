@@ -69,10 +69,11 @@ describe('shape CLI', () => {
 
   it('refuses covered without evidence and verified without test evidence', () => {
     const repo = seededRepo();
-    assert.throws(() => shape(repo, 'set', 'auth/login', '--coverage', 'covered'));
+    assert.throws(() => shape(repo, 'set', 'auth/login', '--coverage', 'covered'), /requires --evidence/);
     writeFileSync(join(repo, 'login.ts'), 'export const login = 1;\n');
-    assert.throws(() =>
-      shape(repo, 'set', 'auth/login', '--coverage', 'verified', '--evidence', 'file:login.ts'),
+    assert.throws(
+      () => shape(repo, 'set', 'auth/login', '--coverage', 'verified', '--evidence', 'file:login.ts'),
+      /verified requires test evidence/,
     );
     writeFileSync(join(repo, 'login.test.ts'), 'test\n');
     shape(repo, 'set', 'auth/login', '--coverage', 'verified', '--evidence', 'file:login.ts', '--evidence', 'test:login.test.ts#login works');

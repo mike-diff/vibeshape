@@ -12,7 +12,7 @@ describe('slugify', () => {
   });
 
   it('rejects titles with no usable characters', () => {
-    assert.throws(() => slugify('!!!'));
+    assert.throws(() => slugify('!!!'), /cannot derive a slug/);
   });
 });
 

@@ -1,6 +1,9 @@
 import { afterEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
+import { execFile, execFileSync } from 'node:child_process';
+import { promisify } from 'node:util';
+
+const execFileAsync = promisify(execFile);
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -27,6 +30,13 @@ function hook(script, payload) {
     encoding: 'utf8',
   });
   return stdout.trim() === '' ? null : JSON.parse(stdout);
+}
+
+/** Fire-and-await variant so tests can run hook processes concurrently. */
+function hookAsync(script, payload) {
+  const child = execFileAsync(process.execPath, [join(SCRIPTS, script)], { encoding: 'utf8' });
+  child.child.stdin.end(JSON.stringify(payload));
+  return child;
 }
 
 function shape(repo, ...args) {
@@ -92,11 +102,11 @@ describe('omission nudge', () => {
     const repo = mappedRepo();
     const s = session(repo);
     hook('inject-tree.mjs', { ...s, hook_event_name: 'UserPromptSubmit' });
-    hook('track-edits.mjs', { ...s, tool_input: { file_path: join(repo, 'unmapped.ts') } });
+    hook('track-edits.mjs', { ...s, tool_input: { file_path: join(repo, 'stray.ts') } });
     hook('track-edits.mjs', { ...s, tool_input: { file_path: join(repo, 'mapped.ts') } });
     const nudge = hook('inject-tree.mjs', { ...s, hook_event_name: 'UserPromptSubmit' });
-    assert.match(nudge.hookSpecificOutput.additionalContext, /referenced by no shape node: unmapped\.ts/);
-    assert.ok(!nudge.hookSpecificOutput.additionalContext.includes('mapped.ts,'));
+    assert.match(nudge.hookSpecificOutput.additionalContext, /referenced by no shape node: stray\.ts\./);
+    assert.ok(!nudge.hookSpecificOutput.additionalContext.includes('mapped.ts'));
     assert.equal(hook('inject-tree.mjs', { ...s, hook_event_name: 'UserPromptSubmit' }), null);
   });
 
@@ -110,13 +120,16 @@ describe('omission nudge', () => {
     assert.match(prompt.hookSpecificOutput.additionalContext, /unmapped\.ts/);
   });
 
-  it('survives parallel edit recording without losing entries (append-only ledger)', () => {
+  it('survives parallel edit recording without losing entries (append-only ledger)', async () => {
     const repo = mappedRepo();
     const s = session(repo);
     hook('inject-tree.mjs', { ...s, hook_event_name: 'UserPromptSubmit' });
-    for (let i = 0; i < 6; i++) {
-      hook('track-edits.mjs', { ...s, tool_input: { file_path: join(repo, `file-${i}.ts`) } });
-    }
+    // Genuinely concurrent hook processes, as parallel tool calls produce.
+    await Promise.all(
+      Array.from({ length: 6 }, (_, i) =>
+        hookAsync('track-edits.mjs', { ...s, tool_input: { file_path: join(repo, `file-${i}.ts`) } }),
+      ),
+    );
     const nudge = hook('inject-tree.mjs', { ...s, hook_event_name: 'UserPromptSubmit' });
     for (let i = 0; i < 6; i++) {
       assert.ok(nudge.hookSpecificOutput.additionalContext.includes(`file-${i}.ts`), `file-${i}.ts recorded`);
