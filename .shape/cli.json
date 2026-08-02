@@ -12,18 +12,18 @@
         {
           "type": "file",
           "path": "plugin/lib/store.mjs",
-          "hash": "c7120c00c9e72f4e"
+          "hash": "b58e061fd65addee"
         },
         {
           "type": "test",
           "path": "tests/cli.test.mjs",
           "name": "survives concurrent writers without losing adds",
-          "hash": "5a4503683e89bff3"
+          "hash": "5491329ed5f8be6f"
         }
       ],
       "assessed": {
         "at": "2026-08-02",
-        "gitRef": "77fdb93"
+        "gitRef": "72dbbd7"
       }
     },
     {
@@ -58,18 +58,18 @@
         {
           "type": "file",
           "path": "plugin/bin/shape.mjs",
-          "hash": "be31e63e6c6ffc93"
+          "hash": "b24841c67582f6b3"
         },
         {
           "type": "test",
           "path": "tests/cli.test.mjs",
           "name": "refuses covered without evidence and verified without test evidence",
-          "hash": "5a4503683e89bff3"
+          "hash": "5491329ed5f8be6f"
         }
       ],
       "assessed": {
         "at": "2026-08-02",
-        "gitRef": "77fdb93"
+        "gitRef": "72dbbd7"
       }
     },
     {
@@ -87,12 +87,12 @@
           "type": "test",
           "path": "tests/cli.test.mjs",
           "name": "audit flags a claim as suspect when its evidence file changes",
-          "hash": "5a4503683e89bff3"
+          "hash": "5491329ed5f8be6f"
         }
       ],
       "assessed": {
         "at": "2026-08-02",
-        "gitRef": "77fdb93"
+        "gitRef": "72dbbd7"
       }
     },
     {
@@ -105,12 +105,12 @@
           "type": "test",
           "path": "tests/cli.test.mjs",
           "name": "changing intent on an assessed node marks it suspect",
-          "hash": "5a4503683e89bff3"
+          "hash": "5491329ed5f8be6f"
         }
       ],
       "assessed": {
         "at": "2026-08-02",
-        "gitRef": "77fdb93"
+        "gitRef": "72dbbd7"
       }
     },
     {
@@ -128,12 +128,12 @@
           "type": "test",
           "path": "tests/cli.test.mjs",
           "name": "budget mode collapses covered leaves",
-          "hash": "5a4503683e89bff3"
+          "hash": "5491329ed5f8be6f"
         }
       ],
       "assessed": {
         "at": "2026-08-02",
-        "gitRef": "77fdb93"
+        "gitRef": "72dbbd7"
       }
     },
     {
@@ -151,12 +151,12 @@
           "type": "test",
           "path": "tests/cli.test.mjs",
           "name": "snapshot writes a self-contained HTML file",
-          "hash": "5a4503683e89bff3"
+          "hash": "5491329ed5f8be6f"
         }
       ],
       "assessed": {
         "at": "2026-08-02",
-        "gitRef": "77fdb93"
+        "gitRef": "72dbbd7"
       }
     },
     {
@@ -174,35 +174,59 @@
           "type": "test",
           "path": "tests/cli.test.mjs",
           "name": "init upserts AGENTS.md only when it already exists",
-          "hash": "5a4503683e89bff3"
+          "hash": "5491329ed5f8be6f"
         }
       ],
       "assessed": {
         "at": "2026-08-02",
-        "gitRef": "77fdb93"
+        "gitRef": "72dbbd7"
       }
     },
     {
       "id": "cli/init-nesting-guard",
       "title": "Nested map guard on init",
       "intent": "WHEN init runs inside a repo that already has an ancestor .shape THE SYSTEM SHALL refuse instead of creating a second map",
-      "coverage": "gap",
-      "gap": "init never checks ancestors; running it in a subdirectory silently creates a nested map",
+      "coverage": "verified",
       "importance": "high",
+      "evidence": [
+        {
+          "type": "file",
+          "path": "plugin/bin/shape.mjs",
+          "hash": "b24841c67582f6b3"
+        },
+        {
+          "type": "test",
+          "path": "tests/cli.test.mjs",
+          "name": "init refuses to create a nested map inside an existing one",
+          "hash": "5491329ed5f8be6f"
+        }
+      ],
       "assessed": {
         "at": "2026-08-02",
-        "gitRef": "77fdb93"
+        "gitRef": "72dbbd7"
       }
     },
     {
       "id": "cli/shape-gitignore",
       "title": "Generated files ignored",
       "intent": "WHEN a map is initialized THE SYSTEM SHALL keep generated files (snapshot.html, .lock) out of version control",
-      "coverage": "gap",
-      "gap": "init writes no .shape/.gitignore, so snapshot.html lands in git on dev machines",
+      "coverage": "verified",
+      "evidence": [
+        {
+          "type": "file",
+          "path": "plugin/lib/store.mjs",
+          "hash": "b58e061fd65addee"
+        },
+        {
+          "type": "test",
+          "path": "tests/cli.test.mjs",
+          "name": "init writes a .shape/.gitignore covering generated files",
+          "hash": "5491329ed5f8be6f"
+        }
+      ],
       "assessed": {
         "at": "2026-08-02",
-        "gitRef": "77fdb93"
+        "gitRef": "72dbbd7"
       }
     }
   ]

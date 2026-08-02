@@ -6,13 +6,13 @@ the rest are release operations.
 
 ## Hardening (impl)
 
-- [ ] `shape init` refuses to create a nested map when an ancestor directory
+- [x] `shape init` refuses to create a nested map when an ancestor directory
       already has `.shape/` (today it silently creates a second map)
-- [ ] `shape init` writes `.shape/.gitignore` covering `snapshot.html` and
+- [x] `shape init` writes `.shape/.gitignore` covering `snapshot.html` and
       `.lock/` so generated files never land in version control
-- [ ] Edit ledger becomes append-only (JSONL) so parallel PostToolUse hooks
+- [x] Edit ledger becomes append-only (JSONL) so parallel PostToolUse hooks
       cannot lose entries in the read-modify-write race
-- [ ] Hook scripts get automated tests (guard deny/allow, injection gating,
+- [x] Hook scripts get automated tests (guard deny/allow, injection gating,
       nudge once-per-file, resume dedupe, delegation reminder, ledger append);
       today they are only manually verified
 - [ ] Windows pass: verify the bash shim under git-bash, path handling in the

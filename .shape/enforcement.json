@@ -7,72 +7,92 @@
       "id": "enforcement/edit-guard",
       "title": "Direct-edit guard",
       "intent": "WHEN an agent writes .shape JSON directly THE SYSTEM SHALL deny and point at the CLI",
-      "coverage": "partial",
-      "gap": "manually verified only; no automated test invokes the hook script",
+      "coverage": "verified",
       "evidence": [
         {
           "type": "file",
           "path": "plugin/scripts/guard-shape-writes.mjs",
           "hash": "e673ed184df13375"
+        },
+        {
+          "type": "test",
+          "path": "tests/hooks.test.mjs",
+          "name": "denies direct writes to .shape JSON",
+          "hash": "4b1a495b00f1e653"
         }
       ],
       "assessed": {
         "at": "2026-08-02",
-        "gitRef": "77fdb93"
+        "gitRef": "72dbbd7"
       }
     },
     {
       "id": "enforcement/context-injection",
       "title": "Per-prompt context injection",
       "intent": "WHEN a prompt is submitted THE SYSTEM SHALL inject the current tree, gated on change or staleness",
-      "coverage": "partial",
-      "gap": "manually verified only; gating, budget use, and prime-vs-short selection untested",
+      "coverage": "verified",
       "evidence": [
         {
           "type": "file",
           "path": "plugin/scripts/inject-tree.mjs",
-          "hash": "5e698f40e1470724"
+          "hash": "6d4fd10883b86d0a"
+        },
+        {
+          "type": "test",
+          "path": "tests/hooks.test.mjs",
+          "name": "injects the full orientation on first prompt",
+          "hash": "4b1a495b00f1e653"
         }
       ],
       "assessed": {
         "at": "2026-08-02",
-        "gitRef": "77fdb93"
+        "gitRef": "72dbbd7"
       }
     },
     {
       "id": "enforcement/omission-nudge",
       "title": "Omission nudge",
       "intent": "WHEN edited files are referenced by no node THE SYSTEM SHALL nudge once per file per session",
-      "coverage": "partial",
-      "gap": "no automated test; ledger read-modify-write can lose entries under parallel PostToolUse hooks (should be append-only)",
+      "coverage": "verified",
       "evidence": [
         {
           "type": "file",
           "path": "plugin/scripts/track-edits.mjs",
-          "hash": "86104afa173e8762"
+          "hash": "5250a29eeba98c60"
+        },
+        {
+          "type": "test",
+          "path": "tests/hooks.test.mjs",
+          "name": "nudges once about edited files no node references",
+          "hash": "4b1a495b00f1e653"
         }
       ],
       "assessed": {
         "at": "2026-08-02",
-        "gitRef": "77fdb93"
+        "gitRef": "72dbbd7"
       }
     },
     {
       "id": "enforcement/delegation-reminder",
       "title": "Delegation reminder",
       "intent": "WHEN a subagent is spawned THE SYSTEM SHALL remind the lead to carry relevant nodes into the brief",
-      "coverage": "partial",
-      "gap": "manually verified only; no automated test",
+      "coverage": "verified",
       "evidence": [
         {
           "type": "file",
           "path": "plugin/scripts/remind-delegation.mjs",
-          "hash": "5aeaa295d42dbc8a"
+          "hash": "6ed248a378101619"
+        },
+        {
+          "type": "test",
+          "path": "tests/hooks.test.mjs",
+          "name": "reminds about subagent briefs only when a map exists",
+          "hash": "4b1a495b00f1e653"
         }
       ],
       "assessed": {
         "at": "2026-08-02",
-        "gitRef": "77fdb93"
+        "gitRef": "72dbbd7"
       }
     },
     {
