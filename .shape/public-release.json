@@ -1,0 +1,12 @@
+{
+  "id": "public-release",
+  "title": "Public release",
+  "intent": "WHEN the plugin goes public THE SYSTEM SHALL follow the parked checklist in RELEASE.md",
+  "coverage": "missing",
+  "gap": "parked by choice: personal-first; RELEASE.md holds the full checklist for whenever going public becomes real",
+  "importance": "low",
+  "assessed": {
+    "at": "2026-08-02",
+    "gitRef": "65fc0a0"
+  }
+}
