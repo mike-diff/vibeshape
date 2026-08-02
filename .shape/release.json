@@ -1,0 +1,64 @@
+{
+  "id": "release",
+  "title": "Release 1.0",
+  "importance": "high",
+  "children": [
+    {
+      "id": "release/public-readme",
+      "title": "Public README",
+      "intent": "WHEN a stranger lands on the repo THE SYSTEM SHALL explain concepts, quickstart, FAQ, limitations, uninstall, and privacy in one read",
+      "coverage": "gap",
+      "gap": "README covers quickstart and layout; concepts, FAQ, limitations, uninstall, and privacy sections missing (see RELEASE.md)",
+      "importance": "high",
+      "assessed": {
+        "at": "2026-08-02",
+        "gitRef": "77fdb93"
+      }
+    },
+    {
+      "id": "release/examples-demo",
+      "title": "Examples and screenshots",
+      "intent": "WHEN evaluating the plugin THE SYSTEM SHALL show a realistic demo map and viewer screenshots",
+      "coverage": "missing",
+      "gap": "no examples/ dir, no screenshots",
+      "assessed": {
+        "at": "2026-08-02",
+        "gitRef": "77fdb93"
+      }
+    },
+    {
+      "id": "release/license-ci",
+      "title": "License and CI",
+      "intent": "WHEN the repo is public THE SYSTEM SHALL carry an MIT license and CI running the test suite on pushes",
+      "coverage": "missing",
+      "gap": "no LICENSE file, no GitHub Actions workflow",
+      "assessed": {
+        "at": "2026-08-02",
+        "gitRef": "77fdb93"
+      }
+    },
+    {
+      "id": "release/github-publish",
+      "title": "GitHub publication",
+      "intent": "WHEN published THE SYSTEM SHALL install from the public repo via marketplace add plus plugin install, verified from a clean machine",
+      "coverage": "missing",
+      "gap": "name-collision check, public repo, topics, tagged 1.0.0, and a clean-machine install verification all outstanding",
+      "importance": "high",
+      "assessed": {
+        "at": "2026-08-02",
+        "gitRef": "77fdb93"
+      }
+    },
+    {
+      "id": "release/windows-pass",
+      "title": "Windows support statement",
+      "intent": "WHEN run on Windows THE SYSTEM SHALL work under git-bash or state supported platforms explicitly",
+      "coverage": "missing",
+      "gap": "bash shim and path handling never exercised on Windows; decide verify-or-document",
+      "assessed": {
+        "at": "2026-08-02",
+        "gitRef": "77fdb93"
+      }
+    }
+  ]
+}

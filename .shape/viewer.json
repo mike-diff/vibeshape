@@ -1,0 +1,63 @@
+{
+  "id": "viewer",
+  "title": "Viewer",
+  "importance": "high",
+  "children": [
+    {
+      "id": "viewer/live-viewer",
+      "title": "Live local map",
+      "intent": "WHEN shape view runs THE SYSTEM SHALL serve a live color-coded tree updating within a second of map changes",
+      "coverage": "verified",
+      "evidence": [
+        {
+          "type": "file",
+          "path": "plugin/lib/server.mjs",
+          "hash": "da298d341e2b4b67"
+        },
+        {
+          "type": "test",
+          "path": "tests/server.test.mjs",
+          "hash": "d57bac308e0c6c78"
+        }
+      ],
+      "assessed": {
+        "at": "2026-08-02",
+        "gitRef": "77fdb93"
+      }
+    },
+    {
+      "id": "viewer/prompt-palette",
+      "title": "Prompt palette",
+      "intent": "WHEN a node is selected THE SYSTEM SHALL offer copy-ready steering prompts",
+      "coverage": "covered",
+      "evidence": [
+        {
+          "type": "file",
+          "path": "plugin/client/main.js",
+          "hash": "22dfd6162fc59218"
+        }
+      ],
+      "assessed": {
+        "at": "2026-08-02",
+        "gitRef": "77fdb93"
+      }
+    },
+    {
+      "id": "viewer/lan-host",
+      "title": "LAN sharing",
+      "intent": "WHEN a host is specified THE SYSTEM SHALL bind it so other devices can view the map",
+      "coverage": "covered",
+      "evidence": [
+        {
+          "type": "file",
+          "path": "plugin/lib/server.mjs",
+          "hash": "da298d341e2b4b67"
+        }
+      ],
+      "assessed": {
+        "at": "2026-08-02",
+        "gitRef": "77fdb93"
+      }
+    }
+  ]
+}

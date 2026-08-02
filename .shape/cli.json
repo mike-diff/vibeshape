@@ -1,0 +1,209 @@
+{
+  "id": "cli",
+  "title": "Shape CLI",
+  "importance": "core",
+  "children": [
+    {
+      "id": "cli/write-gate",
+      "title": "Locked atomic write gate",
+      "intent": "WHEN any writer mutates the map THE SYSTEM SHALL validate, lock, and write atomically through one code path",
+      "coverage": "verified",
+      "evidence": [
+        {
+          "type": "file",
+          "path": "plugin/lib/store.mjs",
+          "hash": "c7120c00c9e72f4e"
+        },
+        {
+          "type": "test",
+          "path": "tests/cli.test.mjs",
+          "name": "survives concurrent writers without losing adds",
+          "hash": "5a4503683e89bff3"
+        }
+      ],
+      "assessed": {
+        "at": "2026-08-02",
+        "gitRef": "77fdb93"
+      }
+    },
+    {
+      "id": "cli/coverage-model",
+      "title": "Deep coverage roll-up",
+      "intent": "WHEN coverage is derived THE SYSTEM SHALL mark a parent covered only when every child is",
+      "coverage": "verified",
+      "evidence": [
+        {
+          "type": "file",
+          "path": "plugin/lib/rollup.mjs",
+          "hash": "afe8503606455048"
+        },
+        {
+          "type": "test",
+          "path": "tests/rollup.test.mjs",
+          "name": "is covered only when every child is at least covered",
+          "hash": "6b4eabf817bf8581"
+        }
+      ],
+      "assessed": {
+        "at": "2026-08-02",
+        "gitRef": "77fdb93"
+      }
+    },
+    {
+      "id": "cli/evidence-gates",
+      "title": "Evidence gates on claims",
+      "intent": "WHEN coverage is asserted THE SYSTEM SHALL require evidence for covered and test evidence for verified",
+      "coverage": "verified",
+      "evidence": [
+        {
+          "type": "file",
+          "path": "plugin/bin/shape.mjs",
+          "hash": "be31e63e6c6ffc93"
+        },
+        {
+          "type": "test",
+          "path": "tests/cli.test.mjs",
+          "name": "refuses covered without evidence and verified without test evidence",
+          "hash": "5a4503683e89bff3"
+        }
+      ],
+      "assessed": {
+        "at": "2026-08-02",
+        "gitRef": "77fdb93"
+      }
+    },
+    {
+      "id": "cli/audit-drift",
+      "title": "Drift audit and review",
+      "intent": "WHEN evidence content changes after assessment THE SYSTEM SHALL flag the claim suspect until re-reviewed",
+      "coverage": "verified",
+      "evidence": [
+        {
+          "type": "file",
+          "path": "plugin/lib/audit.mjs",
+          "hash": "850a65d017748c5c"
+        },
+        {
+          "type": "test",
+          "path": "tests/cli.test.mjs",
+          "name": "audit flags a claim as suspect when its evidence file changes",
+          "hash": "5a4503683e89bff3"
+        }
+      ],
+      "assessed": {
+        "at": "2026-08-02",
+        "gitRef": "77fdb93"
+      }
+    },
+    {
+      "id": "cli/intent-suspect",
+      "title": "Intent-change invalidation",
+      "intent": "WHEN an assessed node intent changes THE SYSTEM SHALL mark it suspect until coverage is re-asserted",
+      "coverage": "verified",
+      "evidence": [
+        {
+          "type": "test",
+          "path": "tests/cli.test.mjs",
+          "name": "changing intent on an assessed node marks it suspect",
+          "hash": "5a4503683e89bff3"
+        }
+      ],
+      "assessed": {
+        "at": "2026-08-02",
+        "gitRef": "77fdb93"
+      }
+    },
+    {
+      "id": "cli/budget-render",
+      "title": "Budget-capped rendering",
+      "intent": "WHEN the map exceeds the budget THE SYSTEM SHALL degrade to area lines plus importance-sorted open work",
+      "coverage": "verified",
+      "evidence": [
+        {
+          "type": "file",
+          "path": "plugin/lib/render.mjs",
+          "hash": "c6db8beb79be0aac"
+        },
+        {
+          "type": "test",
+          "path": "tests/cli.test.mjs",
+          "name": "budget mode collapses covered leaves",
+          "hash": "5a4503683e89bff3"
+        }
+      ],
+      "assessed": {
+        "at": "2026-08-02",
+        "gitRef": "77fdb93"
+      }
+    },
+    {
+      "id": "cli/snapshot",
+      "title": "Standalone HTML snapshot",
+      "intent": "WHEN a snapshot is requested THE SYSTEM SHALL write a self-contained HTML map page",
+      "coverage": "verified",
+      "evidence": [
+        {
+          "type": "file",
+          "path": "plugin/lib/server.mjs",
+          "hash": "da298d341e2b4b67"
+        },
+        {
+          "type": "test",
+          "path": "tests/cli.test.mjs",
+          "name": "snapshot writes a self-contained HTML file",
+          "hash": "5a4503683e89bff3"
+        }
+      ],
+      "assessed": {
+        "at": "2026-08-02",
+        "gitRef": "77fdb93"
+      }
+    },
+    {
+      "id": "cli/guidance-install",
+      "title": "Guidance block install",
+      "intent": "WHEN a map is initialized THE SYSTEM SHALL upsert delimited guidance into CLAUDE.md and an existing AGENTS.md",
+      "coverage": "verified",
+      "evidence": [
+        {
+          "type": "file",
+          "path": "plugin/lib/claudemd.mjs",
+          "hash": "a29ad6de28767073"
+        },
+        {
+          "type": "test",
+          "path": "tests/cli.test.mjs",
+          "name": "init upserts AGENTS.md only when it already exists",
+          "hash": "5a4503683e89bff3"
+        }
+      ],
+      "assessed": {
+        "at": "2026-08-02",
+        "gitRef": "77fdb93"
+      }
+    },
+    {
+      "id": "cli/init-nesting-guard",
+      "title": "Nested map guard on init",
+      "intent": "WHEN init runs inside a repo that already has an ancestor .shape THE SYSTEM SHALL refuse instead of creating a second map",
+      "coverage": "gap",
+      "gap": "init never checks ancestors; running it in a subdirectory silently creates a nested map",
+      "importance": "high",
+      "assessed": {
+        "at": "2026-08-02",
+        "gitRef": "77fdb93"
+      }
+    },
+    {
+      "id": "cli/shape-gitignore",
+      "title": "Generated files ignored",
+      "intent": "WHEN a map is initialized THE SYSTEM SHALL keep generated files (snapshot.html, .lock) out of version control",
+      "coverage": "gap",
+      "gap": "init writes no .shape/.gitignore, so snapshot.html lands in git on dev machines",
+      "assessed": {
+        "at": "2026-08-02",
+        "gitRef": "77fdb93"
+      }
+    }
+  ]
+}

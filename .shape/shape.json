@@ -1,0 +1,10 @@
+{
+  "name": "appshape",
+  "schemaVersion": 1,
+  "areas": [
+    "cli",
+    "enforcement",
+    "viewer",
+    "release"
+  ]
+}
