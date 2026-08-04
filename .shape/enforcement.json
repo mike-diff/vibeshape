@@ -35,7 +35,7 @@
         {
           "type": "file",
           "path": "plugin/scripts/inject-tree.mjs",
-          "hash": "139f354635a6b9bf"
+          "hash": "c47fd015e9091ff9"
         },
         {
           "type": "test",
@@ -46,7 +46,7 @@
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "49451d7"
+        "gitRef": "a7b6ff1"
       }
     },
     {
@@ -104,7 +104,7 @@
         {
           "type": "file",
           "path": "plugin/skills/shape/SKILL.md",
-          "hash": "3292c001ecd4f418"
+          "hash": "b26dbd26911d8447"
         },
         {
           "type": "file",
@@ -113,8 +113,8 @@
         }
       ],
       "assessed": {
-        "at": "2026-08-02",
-        "gitRef": "77fdb93"
+        "at": "2026-08-04",
+        "gitRef": "a7b6ff1"
       }
     }
   ]

@@ -12,7 +12,7 @@
         {
           "type": "file",
           "path": "plugin/lib/store.mjs",
-          "hash": "52bb66c9268f60f0"
+          "hash": "00e63a3d7620b1fb"
         },
         {
           "type": "test",
@@ -23,7 +23,7 @@
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "49451d7"
+        "gitRef": "a7b6ff1"
       }
     },
     {
@@ -122,7 +122,7 @@
         {
           "type": "file",
           "path": "plugin/lib/render.mjs",
-          "hash": "f4aa6ac41df81944"
+          "hash": "d19dc37cf361ad10"
         },
         {
           "type": "test",
@@ -133,7 +133,7 @@
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "49451d7"
+        "gitRef": "a7b6ff1"
       }
     },
     {
@@ -215,7 +215,7 @@
         {
           "type": "file",
           "path": "plugin/lib/store.mjs",
-          "hash": "52bb66c9268f60f0"
+          "hash": "00e63a3d7620b1fb"
         },
         {
           "type": "test",
@@ -226,7 +226,7 @@
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "49451d7"
+        "gitRef": "a7b6ff1"
       }
     },
     {
@@ -244,12 +244,12 @@
           "type": "test",
           "path": "tests/cli.test.mjs",
           "name": "with a verify command, verified requires the cited test to pass right now",
-          "hash": "e9a2b489e71af6e5"
+          "hash": "832be17a5bbf2337"
         }
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "49451d7"
+        "gitRef": "a7b6ff1"
       }
     }
   ]
