@@ -48,9 +48,9 @@ export function loadShape(repoRoot) {
  */
 export function saveShape(repoRoot, shape) {
     const dir = shapeDirPath(repoRoot);
-    atomicWrite(join(dir, MANIFEST_FILE), serializeManifest(shape.manifest));
+    writeIfChanged(join(dir, MANIFEST_FILE), serializeManifest(shape.manifest));
     for (const area of shape.areas) {
-        atomicWrite(join(dir, `${area.id}.json`), serializeArea(area));
+        writeIfChanged(join(dir, `${area.id}.json`), serializeArea(area));
     }
     const keep = new Set([MANIFEST_FILE, ...shape.manifest.areas.map((a) => `${a}.json`)]);
     for (const file of readdirSync(dir)) {
@@ -119,6 +119,19 @@ function lockOwnerAlive(lockDir) {
 }
 function sleepSync(ms) {
     Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+}
+// Read-only operations flow through updateShape too (audit with no
+// findings); leaving identical files untouched keeps mtimes, watchers,
+// and git status quiet.
+function writeIfChanged(filePath, content) {
+    try {
+        if (readFileSync(filePath, 'utf8') === content)
+            return;
+    }
+    catch {
+        // new file
+    }
+    atomicWrite(filePath, content);
 }
 function atomicWrite(filePath, content) {
     const tmp = `${filePath}.tmp-${process.pid}`;
