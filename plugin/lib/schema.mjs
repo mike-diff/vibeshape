@@ -1,5 +1,23 @@
 import { COVERAGE_LEVELS, EVIDENCE_TYPES, IMPORTANCE_LEVELS } from './types.mjs';
 export const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+export const TEXT_LIMITS = { title: 200, intent: 1000, gap: 1000 };
+
+/**
+ * Normalizes human text fields before they enter the map: control characters,
+ * zero-width characters, and line breaks collapse to plain spaces. The map is
+ * injected into agent context every prompt; nothing invisible may ride along.
+ */
+export function cleanText(value, field) {
+  const cleaned = value
+    .replace(/[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u2028\u2029\u2066-\u2069\uFEFF]+/g, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+  const limit = TEXT_LIMITS[field];
+  if (limit && cleaned.length > limit) {
+    throw new Error(`${field} is ${cleaned.length} chars (max ${limit}) - keep it short enough to steer by`);
+  }
+  return cleaned;
+}
 export const NODE_ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*(?:\/[a-z0-9]+(?:-[a-z0-9]+)*)*$/;
 const HASH_PATTERN = /^[0-9a-f]{12,64}$/;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}/;

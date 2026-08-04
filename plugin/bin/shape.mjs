@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { basename } from 'node:path';
 import { COVERAGE_LEVELS, IMPORTANCE_LEVELS } from '../lib/types.mjs';
+import { cleanText } from '../lib/schema.mjs';
 import { addNode, findNode, moveNode, removeNode } from '../lib/tree.mjs';
 import { auditShape, suspectNodes } from '../lib/audit.mjs';
 import { coverageScore, derivedCoverage } from '../lib/rollup.mjs';
@@ -79,13 +80,14 @@ async function run(argv) {
         }
         case 'add': {
             const [parent] = requirePositionals(parsed, ['parent']);
-            const title = requireFlag(parsed, 'title');
+            const title = cleanText(requireFlag(parsed, 'title'), 'title');
+            const addIntent = strFlag(parsed, 'intent');
             let createdId = '';
             updateShape(repoRoot(), (shape) => {
                 createdId = addNode(shape, parent, {
                     title,
                     slug: strFlag(parsed, 'id'),
-                    intent: strFlag(parsed, 'intent'),
+                    intent: addIntent === undefined ? undefined : cleanText(addIntent, 'intent'),
                     importance: enumFlag(parsed, 'importance', IMPORTANCE_LEVELS),
                 }).id;
             });
@@ -97,7 +99,8 @@ async function run(argv) {
             const root = repoRoot();
             const coverage = enumFlag(parsed, 'coverage', COVERAGE_LEVELS);
             const importance = enumFlag(parsed, 'importance', IMPORTANCE_LEVELS);
-            const intent = strFlag(parsed, 'intent');
+            const rawIntent = strFlag(parsed, 'intent');
+            const intent = rawIntent === undefined ? undefined : cleanText(rawIntent, 'intent');
             const evidence = listFlag(parsed, 'evidence');
             let becameSuspect = false;
             updateShape(root, (shape) => {
@@ -109,7 +112,7 @@ async function run(argv) {
                 }
                 const title = strFlag(parsed, 'title');
                 if (title)
-                    node.title = title;
+                    node.title = cleanText(title, 'title');
                 if (intent) {
                     // A coverage verdict was judged against the old intent; a new intent
                     // invalidates it until re-assessed (unless this call re-asserts coverage).
@@ -123,7 +126,7 @@ async function run(argv) {
                     node.importance = importance;
                 const gap = strFlag(parsed, 'gap');
                 if (gap)
-                    node.gap = gap;
+                    node.gap = cleanText(gap, 'gap');
                 if (boolFlag(parsed, 'clear-gap'))
                     delete node.gap;
                 if (boolFlag(parsed, 'clear-evidence'))

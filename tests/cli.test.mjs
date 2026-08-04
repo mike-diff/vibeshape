@@ -239,6 +239,14 @@ describe('shape CLI', () => {
     assert.ok(output.includes('WARN    auth/oauth-login: covered with no evidence links'));
   });
 
+  it('sanitizes control characters out of text fields and caps their length', () => {
+    const repo = seededRepo();
+    shape(repo, 'set', 'auth/login', '--gap', 'broken\x1b[31m over\u200Btwo\nlines');
+    const detail = JSON.parse(shape(repo, 'show', 'auth/login'));
+    assert.equal(detail.gap, 'broken [31m over two lines');
+    assert.throws(() => shape(repo, 'set', 'auth/login', '--gap', 'x'.repeat(1200)), /max 1000/);
+  });
+
   it('rejects a malformed explicit --id instead of corrupting the map', () => {
     const repo = seededRepo();
     assert.throws(() => shape(repo, 'add', 'auth', '--title', 'Bad', '--id', 'UPPER CASE!'), /kebab-case slug/);
