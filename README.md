@@ -55,12 +55,16 @@ No build, no install step, no dependencies beyond Node 20.11+: the repo is the
 plugin.
 
 ```sh
-git clone <this repo> ~/vibeshape
-claude plugin marketplace add ~/vibeshape
+claude plugin marketplace add mike-diff/vibeshape
 claude plugin install vibeshape@vibeshape --scope project
 ```
 
-Or use the CLI directly without Claude Code (add `~/vibeshape/plugin/bin` to PATH):
+New releases arrive on their own: Claude Code refreshes git-sourced
+marketplaces in the background, so installed plugins update on the next
+session start with no further commands.
+
+Or use the CLI directly without Claude Code (clone the repo and add
+`vibeshape/plugin/bin` to PATH):
 
 ```sh
 cd your-app
