@@ -39,19 +39,48 @@ export function renderShape(shape, options = {}) {
         throw new Error(`area "${options.area}" not found`);
     const total = countNodes(areas);
     const overBudget = options.budgetNodes !== undefined && total > options.budgetNodes;
-    const effective = overBudget ? { ...options, gapsOnly: true, forceAreaLines: true } : options;
     const lines = [];
     const whole = { id: 'root', title: shape.manifest.name, children: areas };
     const percent = Math.round(coverageScore(whole) * 100);
     lines.push(options.compact
         ? `shape ${shape.manifest.name} ${percent}%`
         : `${shape.manifest.name} - ${percent}% covered`);
-    for (const area of areas)
-        renderNode(area, 0, lines, effective, true);
     if (overBudget) {
-        lines.push(`(budget mode: ${total} nodes, showing areas and open work only; run shape tree --compact for the full map)`);
+        renderBudgetDigest(areas, total, lines, options);
+        return lines.join('\n');
     }
+    for (const area of areas)
+        renderNode(area, 0, lines, options, true);
     return lines.join('\n');
+}
+
+// Over budget the payload must be CAPPED, not merely filtered: a young map
+// that is mostly open work would otherwise render nearly in full. One line
+// per area, then the top open leaves by importance, then an honest count of
+// what was left out.
+const BUDGET_TOP_OPEN = 40;
+function renderBudgetDigest(areas, total, lines, options) {
+    for (const area of areas)
+        renderNode(area, 0, lines, { ...options, gapsOnly: false }, true, false);
+    const open = [];
+    for (const area of areas)
+        collectOpenLeaves(area, open);
+    open.sort((a, b) => importanceWeight(b) - importanceWeight(a));
+    for (const leaf of open.slice(0, BUDGET_TOP_OPEN))
+        renderNode(leaf, 1, lines, { ...options, gapsOnly: false });
+    const hidden = open.length - Math.min(open.length, BUDGET_TOP_OPEN);
+    lines.push(`(budget mode: ${total} nodes; showing ${areas.length} areas and top ${Math.min(open.length, BUDGET_TOP_OPEN)} open items${hidden > 0 ? `, +${hidden} more open` : ''}; run shape tree --compact --gaps for everything open)`);
+}
+function collectOpenLeaves(node, out) {
+    const children = node.children ?? [];
+    if (children.length === 0) {
+        const coverage = derivedCoverage(node);
+        if (coverage !== 'covered' && coverage !== 'verified' || node.suspect)
+            out.push(node);
+        return;
+    }
+    for (const child of children)
+        collectOpenLeaves(child, out);
 }
 function includeNode(node, options) {
     if (!options.gapsOnly)
@@ -61,7 +90,7 @@ function includeNode(node, options) {
         return true;
     return derivedSuspect(node);
 }
-function renderNode(node, depth, lines, options, isArea = false) {
+function renderNode(node, depth, lines, options, isArea = false, recurse = true) {
     if (!includeNode(node, options) && !(isArea && options.forceAreaLines))
         return;
     const coverage = derivedCoverage(node);
@@ -86,6 +115,8 @@ function renderNode(node, depth, lines, options, isArea = false) {
     }
     // In filtered views, surface important open work first; the full tree
     // keeps authored order.
+    if (!recurse)
+        return;
     const children = options.gapsOnly
         ? [...(node.children ?? [])].sort((a, b) => importanceWeight(b) - importanceWeight(a))
         : node.children ?? [];
