@@ -35,12 +35,12 @@
         {
           "type": "file",
           "path": "plugin/client/main.js",
-          "hash": "22dfd6162fc59218"
+          "hash": "e7cb4279021d0b42"
         }
       ],
       "assessed": {
-        "at": "2026-08-02",
-        "gitRef": "77fdb93"
+        "at": "2026-08-04",
+        "gitRef": "839d0d9"
       }
     },
     {

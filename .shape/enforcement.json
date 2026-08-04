@@ -12,7 +12,7 @@
         {
           "type": "file",
           "path": "plugin/scripts/guard-shape-writes.mjs",
-          "hash": "c93f885f64e293b4"
+          "hash": "a9eb1d7029b9cbbd"
         },
         {
           "type": "test",
@@ -23,7 +23,7 @@
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "49451d7"
+        "gitRef": "839d0d9"
       }
     },
     {
@@ -35,7 +35,7 @@
         {
           "type": "file",
           "path": "plugin/scripts/inject-tree.mjs",
-          "hash": "c47fd015e9091ff9"
+          "hash": "0a7a8d0b6ab1406c"
         },
         {
           "type": "test",
@@ -46,7 +46,7 @@
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "a7b6ff1"
+        "gitRef": "839d0d9"
       }
     },
     {
@@ -58,7 +58,7 @@
         {
           "type": "file",
           "path": "plugin/scripts/track-edits.mjs",
-          "hash": "5250a29eeba98c60"
+          "hash": "3b11851a2e289f43"
         },
         {
           "type": "test",
@@ -69,7 +69,7 @@
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "49451d7"
+        "gitRef": "839d0d9"
       }
     },
     {
@@ -81,7 +81,7 @@
         {
           "type": "file",
           "path": "plugin/scripts/remind-delegation.mjs",
-          "hash": "6ed248a378101619"
+          "hash": "f044c75d3f7dfefb"
         },
         {
           "type": "test",
@@ -92,7 +92,7 @@
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "49451d7"
+        "gitRef": "839d0d9"
       }
     },
     {
@@ -104,7 +104,7 @@
         {
           "type": "file",
           "path": "plugin/skills/shape/SKILL.md",
-          "hash": "b26dbd26911d8447"
+          "hash": "37defc5262d742f1"
         },
         {
           "type": "file",
@@ -114,7 +114,7 @@
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "a7b6ff1"
+        "gitRef": "839d0d9"
       }
     }
   ]

@@ -12,7 +12,7 @@
         {
           "type": "file",
           "path": "plugin/lib/store.mjs",
-          "hash": "00e63a3d7620b1fb"
+          "hash": "8e084e4a062e45a6"
         },
         {
           "type": "test",
@@ -23,7 +23,7 @@
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "a7b6ff1"
+        "gitRef": "839d0d9"
       }
     },
     {
@@ -35,18 +35,18 @@
         {
           "type": "file",
           "path": "plugin/lib/rollup.mjs",
-          "hash": "afe8503606455048"
+          "hash": "bbaac468af29a78a"
         },
         {
           "type": "test",
           "path": "tests/rollup.test.mjs",
           "name": "is covered only when every child is at least covered",
-          "hash": "cedc36425daa5198"
+          "hash": "5703653deb10c4d6"
         }
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "49451d7"
+        "gitRef": "839d0d9"
       }
     },
     {
@@ -58,18 +58,18 @@
         {
           "type": "file",
           "path": "plugin/bin/shape.mjs",
-          "hash": "a8b01fffac6fbfd0"
+          "hash": "e9a69ff8eb0a2fe2"
         },
         {
           "type": "test",
           "path": "tests/cli.test.mjs",
-          "name": "refuses covered without evidence and verified without test evidence",
-          "hash": "b3c29e545d09201a"
+          "name": "refuses covered without evidence and verified without named test evidence",
+          "hash": "a379c2f90f4795d3"
         }
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "49451d7"
+        "gitRef": "839d0d9"
       }
     },
     {
@@ -81,7 +81,7 @@
         {
           "type": "file",
           "path": "plugin/lib/audit.mjs",
-          "hash": "0a64c28506786604"
+          "hash": "e4e8f8490fbfe768"
         },
         {
           "type": "test",
@@ -92,7 +92,7 @@
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "49451d7"
+        "gitRef": "839d0d9"
       }
     },
     {
@@ -105,12 +105,12 @@
           "type": "test",
           "path": "tests/cli.test.mjs",
           "name": "changing intent on an assessed node marks it suspect",
-          "hash": "0d742046ae990684"
+          "hash": "103ad6855c710334"
         }
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "49451d7"
+        "gitRef": "839d0d9"
       }
     },
     {
@@ -122,18 +122,18 @@
         {
           "type": "file",
           "path": "plugin/lib/render.mjs",
-          "hash": "d19dc37cf361ad10"
+          "hash": "a76e04535db0a2a1"
         },
         {
           "type": "test",
           "path": "tests/cli.test.mjs",
           "name": "budget digest caps open work at the top importance-sorted items",
-          "hash": "c63b3c6e64d5742a"
+          "hash": "7bd23737733e1a41"
         }
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "a7b6ff1"
+        "gitRef": "839d0d9"
       }
     },
     {
@@ -192,7 +192,7 @@
         {
           "type": "file",
           "path": "plugin/bin/shape.mjs",
-          "hash": "a8b01fffac6fbfd0"
+          "hash": "e9a69ff8eb0a2fe2"
         },
         {
           "type": "test",
@@ -203,7 +203,7 @@
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "49451d7"
+        "gitRef": "839d0d9"
       }
     },
     {
@@ -215,7 +215,7 @@
         {
           "type": "file",
           "path": "plugin/lib/store.mjs",
-          "hash": "00e63a3d7620b1fb"
+          "hash": "8e084e4a062e45a6"
         },
         {
           "type": "test",
@@ -226,7 +226,7 @@
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "a7b6ff1"
+        "gitRef": "839d0d9"
       }
     },
     {

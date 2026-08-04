@@ -1,6 +1,6 @@
 {
   "name": "appshape",
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "verifyCommand": "node --test --test-name-pattern {name} {path}",
   "areas": [
     "cli",
