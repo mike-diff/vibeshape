@@ -12,18 +12,18 @@
         {
           "type": "file",
           "path": "plugin/lib/store.mjs",
-          "hash": "b58e061fd65addee"
+          "hash": "52bb66c9268f60f0"
         },
         {
           "type": "test",
           "path": "tests/cli.test.mjs",
           "name": "survives concurrent writers without losing adds",
-          "hash": "5491329ed5f8be6f"
+          "hash": "41484259c262a9d7"
         }
       ],
       "assessed": {
-        "at": "2026-08-02",
-        "gitRef": "72dbbd7"
+        "at": "2026-08-04",
+        "gitRef": "7bcceab"
       }
     },
     {
@@ -45,8 +45,8 @@
         }
       ],
       "assessed": {
-        "at": "2026-08-02",
-        "gitRef": "77fdb93"
+        "at": "2026-08-04",
+        "gitRef": "7bcceab"
       }
     },
     {
@@ -64,12 +64,12 @@
           "type": "test",
           "path": "tests/cli.test.mjs",
           "name": "refuses covered without evidence and verified without test evidence",
-          "hash": "5491329ed5f8be6f"
+          "hash": "41484259c262a9d7"
         }
       ],
       "assessed": {
-        "at": "2026-08-02",
-        "gitRef": "72dbbd7"
+        "at": "2026-08-04",
+        "gitRef": "7bcceab"
       }
     },
     {
@@ -87,12 +87,12 @@
           "type": "test",
           "path": "tests/cli.test.mjs",
           "name": "audit flags a claim as suspect when its evidence file changes",
-          "hash": "5491329ed5f8be6f"
+          "hash": "41484259c262a9d7"
         }
       ],
       "assessed": {
-        "at": "2026-08-02",
-        "gitRef": "72dbbd7"
+        "at": "2026-08-04",
+        "gitRef": "7bcceab"
       }
     },
     {
@@ -105,12 +105,12 @@
           "type": "test",
           "path": "tests/cli.test.mjs",
           "name": "changing intent on an assessed node marks it suspect",
-          "hash": "5491329ed5f8be6f"
+          "hash": "41484259c262a9d7"
         }
       ],
       "assessed": {
-        "at": "2026-08-02",
-        "gitRef": "72dbbd7"
+        "at": "2026-08-04",
+        "gitRef": "7bcceab"
       }
     },
     {
@@ -128,12 +128,12 @@
           "type": "test",
           "path": "tests/cli.test.mjs",
           "name": "budget mode collapses covered leaves",
-          "hash": "5491329ed5f8be6f"
+          "hash": "41484259c262a9d7"
         }
       ],
       "assessed": {
-        "at": "2026-08-02",
-        "gitRef": "72dbbd7"
+        "at": "2026-08-04",
+        "gitRef": "7bcceab"
       }
     },
     {
@@ -151,12 +151,12 @@
           "type": "test",
           "path": "tests/cli.test.mjs",
           "name": "snapshot writes a self-contained HTML file",
-          "hash": "5491329ed5f8be6f"
+          "hash": "41484259c262a9d7"
         }
       ],
       "assessed": {
-        "at": "2026-08-02",
-        "gitRef": "72dbbd7"
+        "at": "2026-08-04",
+        "gitRef": "7bcceab"
       }
     },
     {
@@ -174,12 +174,12 @@
           "type": "test",
           "path": "tests/cli.test.mjs",
           "name": "init upserts AGENTS.md only when it already exists",
-          "hash": "5491329ed5f8be6f"
+          "hash": "41484259c262a9d7"
         }
       ],
       "assessed": {
-        "at": "2026-08-02",
-        "gitRef": "72dbbd7"
+        "at": "2026-08-04",
+        "gitRef": "7bcceab"
       }
     },
     {
@@ -198,12 +198,12 @@
           "type": "test",
           "path": "tests/cli.test.mjs",
           "name": "init refuses to create a nested map inside an existing one",
-          "hash": "5491329ed5f8be6f"
+          "hash": "41484259c262a9d7"
         }
       ],
       "assessed": {
-        "at": "2026-08-02",
-        "gitRef": "72dbbd7"
+        "at": "2026-08-04",
+        "gitRef": "7bcceab"
       }
     },
     {
@@ -215,18 +215,18 @@
         {
           "type": "file",
           "path": "plugin/lib/store.mjs",
-          "hash": "b58e061fd65addee"
+          "hash": "52bb66c9268f60f0"
         },
         {
           "type": "test",
           "path": "tests/cli.test.mjs",
           "name": "init writes a .shape/.gitignore covering generated files",
-          "hash": "5491329ed5f8be6f"
+          "hash": "41484259c262a9d7"
         }
       ],
       "assessed": {
-        "at": "2026-08-02",
-        "gitRef": "72dbbd7"
+        "at": "2026-08-04",
+        "gitRef": "7bcceab"
       }
     }
   ]

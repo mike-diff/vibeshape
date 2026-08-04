@@ -18,12 +18,12 @@
           "type": "test",
           "path": "tests/hooks.test.mjs",
           "name": "denies direct writes to .shape JSON",
-          "hash": "4b1a495b00f1e653"
+          "hash": "e081f90def78ef88"
         }
       ],
       "assessed": {
-        "at": "2026-08-02",
-        "gitRef": "72dbbd7"
+        "at": "2026-08-04",
+        "gitRef": "7bcceab"
       }
     },
     {
@@ -41,12 +41,12 @@
           "type": "test",
           "path": "tests/hooks.test.mjs",
           "name": "injects the full orientation on first prompt",
-          "hash": "4b1a495b00f1e653"
+          "hash": "e081f90def78ef88"
         }
       ],
       "assessed": {
-        "at": "2026-08-02",
-        "gitRef": "72dbbd7"
+        "at": "2026-08-04",
+        "gitRef": "7bcceab"
       }
     },
     {
@@ -64,12 +64,12 @@
           "type": "test",
           "path": "tests/hooks.test.mjs",
           "name": "nudges once about edited files no node references",
-          "hash": "4b1a495b00f1e653"
+          "hash": "e081f90def78ef88"
         }
       ],
       "assessed": {
-        "at": "2026-08-02",
-        "gitRef": "72dbbd7"
+        "at": "2026-08-04",
+        "gitRef": "7bcceab"
       }
     },
     {
@@ -87,12 +87,12 @@
           "type": "test",
           "path": "tests/hooks.test.mjs",
           "name": "reminds about subagent briefs only when a map exists",
-          "hash": "4b1a495b00f1e653"
+          "hash": "e081f90def78ef88"
         }
       ],
       "assessed": {
-        "at": "2026-08-02",
-        "gitRef": "72dbbd7"
+        "at": "2026-08-04",
+        "gitRef": "7bcceab"
       }
     },
     {
