@@ -107,6 +107,7 @@ export function manifestErrors(raw) {
     checkString(errors, 'manifest.name', raw.name);
     if (raw.schemaVersion !== 1)
         errors.push('manifest.schemaVersion: must be 1');
+    checkString(errors, 'manifest.verifyCommand', raw.verifyCommand, { optional: true });
     if (!Array.isArray(raw.areas)) {
         errors.push('manifest.areas: must be an array');
     }

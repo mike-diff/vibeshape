@@ -12,7 +12,7 @@ const NODE_KEYS = [
 ];
 const EVIDENCE_KEYS = ['type', 'path', 'name', 'hash'];
 const ASSESSED_KEYS = ['at', 'gitRef'];
-const MANIFEST_KEYS = ['name', 'schemaVersion', 'areas'];
+const MANIFEST_KEYS = ['name', 'schemaVersion', 'verifyCommand', 'areas'];
 function pick(obj, keys) {
     const out = {};
     for (const key of keys) {

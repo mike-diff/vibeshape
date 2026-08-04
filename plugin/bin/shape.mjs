@@ -2,18 +2,19 @@
 import { basename } from 'node:path';
 import { COVERAGE_LEVELS, IMPORTANCE_LEVELS } from '../lib/types.mjs';
 import { cleanText } from '../lib/schema.mjs';
-import { addNode, findNode, moveNode, removeNode } from '../lib/tree.mjs';
+import { addNode, findNode, moveNode, removeNode, walk } from '../lib/tree.mjs';
 import { auditShape, suspectNodes } from '../lib/audit.mjs';
 import { coverageScore, derivedCoverage } from '../lib/rollup.mjs';
 import { initShape, loadShape, updateShape } from '../lib/store.mjs';
 import { boolFlag, enumFlag, intFlag, listFlag, parseArgs, requireFlag, requirePositionals, strFlag, } from '../lib/args.mjs';
 import { upsertGuidanceBlock } from '../lib/claudemd.mjs';
 import { fingerprintEvidence, parseEvidenceSpec } from '../lib/evidence.mjs';
+import { runTestEvidence } from '../lib/verify.mjs';
 import { renderPrime, renderShape } from '../lib/render.mjs';
 import { findRepoRoot, findShapeRootOrNull, gitShortRef, todayISO } from '../lib/repo.mjs';
 const FLAG_SPEC = {
-    value: ['name', 'area', 'budget', 'title', 'id', 'intent', 'importance', 'coverage', 'gap', 'evidence', 'port', 'host', 'out'],
-    boolean: ['compact', 'gaps', 'clear-gap', 'clear-evidence', 'force', 'help'],
+    value: ['name', 'area', 'budget', 'title', 'id', 'intent', 'importance', 'coverage', 'gap', 'evidence', 'port', 'host', 'out', 'verify-command'],
+    boolean: ['compact', 'gaps', 'clear-gap', 'clear-evidence', 'force', 'help', 'run'],
 };
 const USAGE = `appshape: a living coverage map for agent-built apps
 
@@ -30,7 +31,8 @@ usage: shape [--dir <path>] <command>
                                           update a node; --coverage stamps the assessment
   rm <id> [--force]                       remove a node or subtree
   mv <id> <new-parent>                    move a subtree (ids rewritten)
-  audit                                   flag drifted claims suspect; nonzero exit if any remain
+  audit [--run]                           flag drifted claims suspect (--run also executes verified tests); nonzero exit if any remain
+  config [--verify-command <tpl>]         show or set repo config; tpl runs tests with {path} and {name} placeholders
   review <id>                             clear suspect after re-assessing
   snapshot [--out <file>]                 write a self-contained HTML snapshot of the map
   view [--port <port>] [--host <host>]    live visual map in the browser
@@ -102,6 +104,22 @@ async function run(argv) {
             const rawIntent = strFlag(parsed, 'intent');
             const intent = rawIntent === undefined ? undefined : cleanText(rawIntent, 'intent');
             const evidence = listFlag(parsed, 'evidence');
+            // Verified means the cited tests pass NOW. Run them before taking
+            // the write lock: test runs can be slow and must not hold it.
+            if (coverage === 'verified') {
+                const pre = loadShape(root);
+                const preNode = findNode(pre, id);
+                if (!preNode) throw new Error(`node "${id}" not found`);
+                const finalEvidence = evidence.length > 0 ? evidence.map(parseEvidenceSpec) : preNode.evidence ?? [];
+                const template = pre.manifest.verifyCommand;
+                if (template) {
+                    const run = runTestEvidence(root, template, finalEvidence);
+                    if (!run.ok) throw new Error(`verified refused - ${run.detail}`);
+                }
+                else {
+                    console.error('note: verified is unexecuted - set a verify command (shape config --verify-command) to make verified mean the tests pass');
+                }
+            }
             let becameSuspect = false;
             updateShape(root, (shape) => {
                 const node = findNode(shape, id);
@@ -173,6 +191,21 @@ async function run(argv) {
             console.log(`moved to ${movedId}`);
             return;
         }
+        case 'config': {
+            const root = repoRoot();
+            const template = strFlag(parsed, 'verify-command');
+            if (template === undefined) {
+                const shape = loadShape(root);
+                console.log(JSON.stringify({ name: shape.manifest.name, verifyCommand: shape.manifest.verifyCommand ?? null }, null, 2));
+                return;
+            }
+            updateShape(root, (shape) => {
+                if (template === 'none') delete shape.manifest.verifyCommand;
+                else shape.manifest.verifyCommand = template;
+            });
+            console.log(template === 'none' ? 'verify command cleared' : `verify command set: ${template}`);
+            return;
+        }
         case 'audit': {
             const root = repoRoot();
             let findings = [];
@@ -181,6 +214,38 @@ async function run(argv) {
                 findings = auditShape(root, shape);
                 suspects = suspectNodes(shape).length;
             });
+            if (boolFlag(parsed, 'run')) {
+                // Execute the cited tests behind every verified claim; a claim
+                // whose test fails right now is suspect no matter how fresh
+                // its hashes are.
+                const shape = loadShape(root);
+                const template = shape.manifest.verifyCommand;
+                if (!template) {
+                    console.log('WARN    --run skipped: no verify command configured (shape config --verify-command)');
+                }
+                else {
+                    const failed = [];
+                    for (const area of shape.areas) {
+                        walk(area, (node) => {
+                            if (node.coverage !== 'verified' || node.suspect) return;
+                            const run = runTestEvidence(root, template, node.evidence ?? []);
+                            if (!run.ok) failed.push({ id: node.id, detail: run.detail.split('\n')[0] });
+                        });
+                    }
+                    if (failed.length > 0) {
+                        updateShape(root, (shape2) => {
+                            for (const f of failed) {
+                                const node = findNode(shape2, f.id);
+                                if (node) node.suspect = true;
+                            }
+                        });
+                        for (const f of failed) {
+                            findings.push({ id: f.id, kind: 'drifted', detail: `test run failed: ${f.detail}` });
+                        }
+                        suspects += failed.length;
+                    }
+                }
+            }
             for (const finding of findings) {
                 console.log(`${finding.kind === 'drifted' ? 'SUSPECT' : 'WARN   '} ${finding.id}: ${finding.detail}`);
             }
