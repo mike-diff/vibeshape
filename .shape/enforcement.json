@@ -12,18 +12,18 @@
         {
           "type": "file",
           "path": "plugin/scripts/guard-shape-writes.mjs",
-          "hash": "e673ed184df13375"
+          "hash": "c93f885f64e293b4"
         },
         {
           "type": "test",
           "path": "tests/hooks.test.mjs",
           "name": "denies direct writes to .shape JSON",
-          "hash": "e081f90def78ef88"
+          "hash": "97d778b4f78af6e0"
         }
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "7bcceab"
+        "gitRef": "50be544"
       }
     },
     {
@@ -35,18 +35,18 @@
         {
           "type": "file",
           "path": "plugin/scripts/inject-tree.mjs",
-          "hash": "6d4fd10883b86d0a"
+          "hash": "139f354635a6b9bf"
         },
         {
           "type": "test",
           "path": "tests/hooks.test.mjs",
           "name": "injects the full orientation on first prompt",
-          "hash": "e081f90def78ef88"
+          "hash": "97d778b4f78af6e0"
         }
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "7bcceab"
+        "gitRef": "50be544"
       }
     },
     {
@@ -64,12 +64,12 @@
           "type": "test",
           "path": "tests/hooks.test.mjs",
           "name": "nudges once about edited files no node references",
-          "hash": "e081f90def78ef88"
+          "hash": "97d778b4f78af6e0"
         }
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "7bcceab"
+        "gitRef": "50be544"
       }
     },
     {
@@ -87,12 +87,12 @@
           "type": "test",
           "path": "tests/hooks.test.mjs",
           "name": "reminds about subagent briefs only when a map exists",
-          "hash": "e081f90def78ef88"
+          "hash": "97d778b4f78af6e0"
         }
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "7bcceab"
+        "gitRef": "50be544"
       }
     },
     {

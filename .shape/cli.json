@@ -18,12 +18,12 @@
           "type": "test",
           "path": "tests/cli.test.mjs",
           "name": "survives concurrent writers without losing adds",
-          "hash": "41484259c262a9d7"
+          "hash": "3eb82adddddf3dbb"
         }
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "7bcceab"
+        "gitRef": "50be544"
       }
     },
     {
@@ -46,7 +46,7 @@
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "7bcceab"
+        "gitRef": "50be544"
       }
     },
     {
@@ -58,18 +58,18 @@
         {
           "type": "file",
           "path": "plugin/bin/shape.mjs",
-          "hash": "b24841c67582f6b3"
+          "hash": "550328fbd6b39815"
         },
         {
           "type": "test",
           "path": "tests/cli.test.mjs",
           "name": "refuses covered without evidence and verified without test evidence",
-          "hash": "41484259c262a9d7"
+          "hash": "3eb82adddddf3dbb"
         }
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "7bcceab"
+        "gitRef": "50be544"
       }
     },
     {
@@ -87,12 +87,12 @@
           "type": "test",
           "path": "tests/cli.test.mjs",
           "name": "audit flags a claim as suspect when its evidence file changes",
-          "hash": "41484259c262a9d7"
+          "hash": "3eb82adddddf3dbb"
         }
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "7bcceab"
+        "gitRef": "50be544"
       }
     },
     {
@@ -105,12 +105,12 @@
           "type": "test",
           "path": "tests/cli.test.mjs",
           "name": "changing intent on an assessed node marks it suspect",
-          "hash": "41484259c262a9d7"
+          "hash": "3eb82adddddf3dbb"
         }
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "7bcceab"
+        "gitRef": "50be544"
       }
     },
     {
@@ -128,12 +128,12 @@
           "type": "test",
           "path": "tests/cli.test.mjs",
           "name": "budget mode collapses covered leaves",
-          "hash": "41484259c262a9d7"
+          "hash": "3eb82adddddf3dbb"
         }
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "7bcceab"
+        "gitRef": "50be544"
       }
     },
     {
@@ -151,12 +151,12 @@
           "type": "test",
           "path": "tests/cli.test.mjs",
           "name": "snapshot writes a self-contained HTML file",
-          "hash": "41484259c262a9d7"
+          "hash": "3eb82adddddf3dbb"
         }
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "7bcceab"
+        "gitRef": "50be544"
       }
     },
     {
@@ -174,12 +174,12 @@
           "type": "test",
           "path": "tests/cli.test.mjs",
           "name": "init upserts AGENTS.md only when it already exists",
-          "hash": "41484259c262a9d7"
+          "hash": "3eb82adddddf3dbb"
         }
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "7bcceab"
+        "gitRef": "50be544"
       }
     },
     {
@@ -192,18 +192,18 @@
         {
           "type": "file",
           "path": "plugin/bin/shape.mjs",
-          "hash": "b24841c67582f6b3"
+          "hash": "550328fbd6b39815"
         },
         {
           "type": "test",
           "path": "tests/cli.test.mjs",
           "name": "init refuses to create a nested map inside an existing one",
-          "hash": "41484259c262a9d7"
+          "hash": "3eb82adddddf3dbb"
         }
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "7bcceab"
+        "gitRef": "50be544"
       }
     },
     {
@@ -221,12 +221,12 @@
           "type": "test",
           "path": "tests/cli.test.mjs",
           "name": "init writes a .shape/.gitignore covering generated files",
-          "hash": "41484259c262a9d7"
+          "hash": "3eb82adddddf3dbb"
         }
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "7bcceab"
+        "gitRef": "50be544"
       }
     }
   ]
