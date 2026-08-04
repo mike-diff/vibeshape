@@ -17,12 +17,13 @@
         {
           "type": "test",
           "path": "tests/server.test.mjs",
-          "hash": "d57bac308e0c6c78"
+          "name": "emits shape-changed over SSE when an area file is written",
+          "hash": "241c02af3f146211"
         }
       ],
       "assessed": {
-        "at": "2026-08-02",
-        "gitRef": "77fdb93"
+        "at": "2026-08-04",
+        "gitRef": "49451d7"
       }
     },
     {

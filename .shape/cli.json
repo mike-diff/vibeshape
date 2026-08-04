@@ -18,12 +18,12 @@
           "type": "test",
           "path": "tests/cli.test.mjs",
           "name": "survives concurrent writers without losing adds",
-          "hash": "3eb82adddddf3dbb"
+          "hash": "871e2ba3a05382e6"
         }
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "50be544"
+        "gitRef": "49451d7"
       }
     },
     {
@@ -41,12 +41,12 @@
           "type": "test",
           "path": "tests/rollup.test.mjs",
           "name": "is covered only when every child is at least covered",
-          "hash": "6b4eabf817bf8581"
+          "hash": "cedc36425daa5198"
         }
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "50be544"
+        "gitRef": "49451d7"
       }
     },
     {
@@ -58,41 +58,41 @@
         {
           "type": "file",
           "path": "plugin/bin/shape.mjs",
-          "hash": "550328fbd6b39815"
+          "hash": "a8b01fffac6fbfd0"
         },
         {
           "type": "test",
           "path": "tests/cli.test.mjs",
           "name": "refuses covered without evidence and verified without test evidence",
-          "hash": "3eb82adddddf3dbb"
+          "hash": "b3c29e545d09201a"
         }
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "50be544"
+        "gitRef": "49451d7"
       }
     },
     {
       "id": "cli/audit-drift",
       "title": "Drift audit and review",
-      "intent": "WHEN evidence content changes after assessment THE SYSTEM SHALL flag the claim suspect until re-reviewed",
+      "intent": "WHEN cited evidence changes at the unit level or a test run fails THE SYSTEM SHALL flag the claim suspect until re-reviewed",
       "coverage": "verified",
       "evidence": [
         {
           "type": "file",
           "path": "plugin/lib/audit.mjs",
-          "hash": "850a65d017748c5c"
+          "hash": "0a64c28506786604"
         },
         {
           "type": "test",
           "path": "tests/cli.test.mjs",
-          "name": "audit flags a claim as suspect when its evidence file changes",
-          "hash": "3eb82adddddf3dbb"
+          "name": "unit-scoped hashing: unrelated edits to an evidence file do not drift the claim",
+          "hash": "89893cc699887947"
         }
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "50be544"
+        "gitRef": "49451d7"
       }
     },
     {
@@ -105,35 +105,35 @@
           "type": "test",
           "path": "tests/cli.test.mjs",
           "name": "changing intent on an assessed node marks it suspect",
-          "hash": "3eb82adddddf3dbb"
+          "hash": "0d742046ae990684"
         }
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "50be544"
+        "gitRef": "49451d7"
       }
     },
     {
       "id": "cli/budget-render",
       "title": "Budget-capped rendering",
-      "intent": "WHEN the map exceeds the budget THE SYSTEM SHALL degrade to area lines plus importance-sorted open work",
+      "intent": "WHEN the map exceeds the budget THE SYSTEM SHALL cap the payload to area lines plus the top open items by importance",
       "coverage": "verified",
       "evidence": [
         {
           "type": "file",
           "path": "plugin/lib/render.mjs",
-          "hash": "c6db8beb79be0aac"
+          "hash": "f4aa6ac41df81944"
         },
         {
           "type": "test",
           "path": "tests/cli.test.mjs",
-          "name": "budget mode collapses covered leaves",
-          "hash": "3eb82adddddf3dbb"
+          "name": "budget digest caps open work at the top importance-sorted items",
+          "hash": "c63b3c6e64d5742a"
         }
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "50be544"
+        "gitRef": "49451d7"
       }
     },
     {
@@ -151,12 +151,12 @@
           "type": "test",
           "path": "tests/cli.test.mjs",
           "name": "snapshot writes a self-contained HTML file",
-          "hash": "3eb82adddddf3dbb"
+          "hash": "61c79c2605d55471"
         }
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "50be544"
+        "gitRef": "49451d7"
       }
     },
     {
@@ -174,12 +174,12 @@
           "type": "test",
           "path": "tests/cli.test.mjs",
           "name": "init upserts AGENTS.md only when it already exists",
-          "hash": "3eb82adddddf3dbb"
+          "hash": "4790308bcb93bc91"
         }
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "50be544"
+        "gitRef": "49451d7"
       }
     },
     {
@@ -192,18 +192,18 @@
         {
           "type": "file",
           "path": "plugin/bin/shape.mjs",
-          "hash": "550328fbd6b39815"
+          "hash": "a8b01fffac6fbfd0"
         },
         {
           "type": "test",
           "path": "tests/cli.test.mjs",
           "name": "init refuses to create a nested map inside an existing one",
-          "hash": "3eb82adddddf3dbb"
+          "hash": "98e6dd33cf43f8b7"
         }
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "50be544"
+        "gitRef": "49451d7"
       }
     },
     {
@@ -221,12 +221,35 @@
           "type": "test",
           "path": "tests/cli.test.mjs",
           "name": "init writes a .shape/.gitignore covering generated files",
-          "hash": "3eb82adddddf3dbb"
+          "hash": "c8ac05c421498fbb"
         }
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "50be544"
+        "gitRef": "49451d7"
+      }
+    },
+    {
+      "id": "cli/verified-execution",
+      "title": "Verified means tests pass",
+      "intent": "WHEN a verify command is configured THE SYSTEM SHALL execute the cited tests and refuse verified unless they pass now",
+      "coverage": "verified",
+      "evidence": [
+        {
+          "type": "file",
+          "path": "plugin/lib/verify.mjs",
+          "hash": "01830a83ef34088f"
+        },
+        {
+          "type": "test",
+          "path": "tests/cli.test.mjs",
+          "name": "with a verify command, verified requires the cited test to pass right now",
+          "hash": "e9a2b489e71af6e5"
+        }
+      ],
+      "assessed": {
+        "at": "2026-08-04",
+        "gitRef": "49451d7"
       }
     }
   ]
