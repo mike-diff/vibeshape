@@ -124,7 +124,8 @@ function renderNode(node, depth, lines, options, isArea = false, recurse = true)
         renderNode(child, depth + 1, lines, options);
 }
 /** Orientation block for agent context: usage summary plus compact tree. */
-export function renderPrime(shape) {
+export const DEFAULT_BUDGET_NODES = 120;
+export function renderPrime(shape, budgetNodes = DEFAULT_BUDGET_NODES) {
     return [
         'This repo has an appshape coverage map in .shape/ - a living tree of intended',
         'features scored against the code. Consult it before choosing work; update it',
@@ -137,6 +138,6 @@ export function renderPrime(shape) {
         'When you implement, change, or remove a feature, update its node (coverage,',
         'gap note, evidence) in the same session.',
         '',
-        renderShape(shape, { compact: true }),
+        renderShape(shape, { compact: true, budgetNodes }),
     ].join('\n');
 }
