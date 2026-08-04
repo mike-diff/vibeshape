@@ -16,6 +16,7 @@ import { coverageScore, derivedCoverage, derivedSuspect } from './rollup.mjs';
  * @property {string} name
  * @property {Derived} derived
  * @property {Record<Coverage, number>} counts
+ * @property {number} suspectCount  Nodes carrying their own suspect flag.
  * @property {DecoratedNode[]} areas
  */
 
@@ -51,6 +52,19 @@ function countLeaves(node, counts) {
 }
 
 /**
+ * Suspect nodes counted by their own stored flag, not the derived rollup, so
+ * the viewer header reports the same number the CLI header does.
+ *
+ * @param {DecoratedNode} node
+ * @param {() => void} hit
+ * @returns {void}
+ */
+function countSuspect(node, hit) {
+  if (node.suspect === true) hit();
+  for (const child of node.children ?? []) countSuspect(child, hit);
+}
+
+/**
  * The shape as the client consumes it: every node carries its rolled-up state.
  *
  * @param {Shape} shape
@@ -65,10 +79,13 @@ export function decorateShape(shape) {
     gap: 0,
     partial: 0,
     covered: 0,
+    linked: 0,
     verified: 0,
   };
   const areas = shape.areas.map(decorateNode);
+  let suspect = 0;
   for (const area of areas) countLeaves(area, counts);
+  for (const area of areas) countSuspect(area, () => suspect++);
   return {
     name: shape.manifest.name,
     derived: {
@@ -77,6 +94,7 @@ export function decorateShape(shape) {
       percent: Math.round(coverageScore(whole) * 100),
     },
     counts,
+    suspectCount: suspect,
     areas,
   };
 }

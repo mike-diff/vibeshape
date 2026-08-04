@@ -1,6 +1,16 @@
 import { COVERAGE_LEVELS, EVIDENCE_TYPES, IMPORTANCE_LEVELS } from './types.mjs';
 export const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 export const TEXT_LIMITS = { title: 200, intent: 1000, gap: 1000 };
+/**
+ * Ids become filenames and are echoed into every injected tree; an unbounded
+ * slug is a context-budget hole. Live maxima are well under this.
+ */
+export const MAX_SLUG_SEGMENT = 64;
+
+/** The offending segment of a path-like id, or null when all fit. */
+function overlongSegment(id) {
+  return id.split('/').find((segment) => segment.length > MAX_SLUG_SEGMENT) ?? null;
+}
 
 /**
  * Normalizes human text fields before they enter the map: control characters,
@@ -51,6 +61,11 @@ export function nodeErrors(raw, path = 'node') {
     if (!isRecord(raw))
         return [`${path}: must be an object`];
     checkString(errors, `${path}.id`, raw.id, { pattern: NODE_ID_PATTERN, patternHint: 'must be a path of kebab-case slugs' });
+    if (typeof raw.id === 'string') {
+        const long = overlongSegment(raw.id);
+        if (long !== null)
+            errors.push(`${path}.id: segment "${long}" is ${long.length} chars (max ${MAX_SLUG_SEGMENT})`);
+    }
     checkString(errors, `${path}.title`, raw.title);
     checkString(errors, `${path}.intent`, raw.intent, { optional: true });
     checkEnum(errors, `${path}.coverage`, raw.coverage, COVERAGE_LEVELS);
@@ -105,14 +120,18 @@ export function manifestErrors(raw) {
     if (!isRecord(raw))
         return ['manifest: must be an object'];
     checkString(errors, 'manifest.name', raw.name);
-    if (raw.schemaVersion !== 1)
-        errors.push('manifest.schemaVersion: must be 1');
+    if (raw.schemaVersion !== 1 && raw.schemaVersion !== 2)
+        errors.push('manifest.schemaVersion: must be 1 or 2');
     checkString(errors, 'manifest.verifyCommand', raw.verifyCommand, { optional: true });
     if (!Array.isArray(raw.areas)) {
         errors.push('manifest.areas: must be an array');
     }
     else {
-        raw.areas.forEach((area, i) => checkString(errors, `manifest.areas.${i}`, area, { pattern: SLUG_PATTERN, patternHint: 'must be a kebab-case slug' }));
+        raw.areas.forEach((area, i) => {
+            checkString(errors, `manifest.areas.${i}`, area, { pattern: SLUG_PATTERN, patternHint: 'must be a kebab-case slug' });
+            if (typeof area === 'string' && area.length > MAX_SLUG_SEGMENT)
+                errors.push(`manifest.areas.${i}: is ${area.length} chars (max ${MAX_SLUG_SEGMENT})`);
+        });
     }
     return errors;
 }

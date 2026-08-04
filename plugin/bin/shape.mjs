@@ -6,12 +6,24 @@ import { addNode, findNode, moveNode, removeNode, walk } from '../lib/tree.mjs';
 import { auditShape, suspectNodes } from '../lib/audit.mjs';
 import { coverageScore, derivedCoverage } from '../lib/rollup.mjs';
 import { initShape, loadShape, updateShape } from '../lib/store.mjs';
+import { migrateOnWrite } from '../lib/migrate.mjs';
 import { boolFlag, enumFlag, intFlag, listFlag, parseArgs, requireFlag, requirePositionals, strFlag, } from '../lib/args.mjs';
 import { upsertGuidanceBlock } from '../lib/claudemd.mjs';
-import { fingerprintEvidence, parseEvidenceSpec } from '../lib/evidence.mjs';
+import { fingerprintEvidence, hasNamedTestEvidence, parseEvidenceSpec } from '../lib/evidence.mjs';
 import { runTestEvidence } from '../lib/verify.mjs';
 import { renderPrime, renderShape } from '../lib/render.mjs';
 import { findRepoRoot, findShapeRootOrNull, gitShortRef, todayISO } from '../lib/repo.mjs';
+/** Levels that assert the intent is realized, so they owe evidence. */
+const CLAIM_LEVELS = new Set(['covered', 'linked', 'verified']);
+/**
+ * linked and verified both mean "a named test stands behind this"; only
+ * verified adds that it was executed and passed.
+ */
+function requireNamedTest(coverage, evidence) {
+    if (!hasNamedTestEvidence(evidence)) {
+        throw new Error(`${coverage} requires named test evidence (--evidence test:path#name); a claim without a named test is covered at best`);
+    }
+}
 const FLAG_SPEC = {
     value: ['name', 'area', 'budget', 'title', 'id', 'intent', 'importance', 'coverage', 'gap', 'evidence', 'port', 'host', 'out', 'verify-command'],
     boolean: ['compact', 'gaps', 'clear-gap', 'clear-evidence', 'force', 'help', 'run'],
@@ -29,11 +41,13 @@ usage: shape [--dir <path>] <command>
   set <id> [--coverage <level>] [--gap <text>] [--clear-gap] [--title <t>] [--intent <ears>]
            [--importance <level>] [--evidence type:path[#name]]... [--clear-evidence]
                                           update a node; --coverage stamps the assessment
+                                          levels: missing gap partial covered linked verified
+                                          linked = a named test is cited; verified = it was executed and passed
   rm <id> [--force]                       remove a node or subtree
   mv <id> <new-parent>                    move a subtree (ids rewritten)
-  audit [--run]                           flag drifted claims suspect (--run also executes verified tests); nonzero exit if any remain
+  audit [--run]                           flag drifted and unfounded claims suspect (--run also executes verified tests); nonzero exit if any remain
   config [--verify-command <tpl>]         show or set repo config; tpl runs tests with {path} and {name} placeholders
-  review <id>                             clear suspect after re-assessing
+                                          --verify-command none clears it and demotes verified to linked
   snapshot [--out <file>]                 write a self-contained HTML snapshot of the map
   view [--port <port>] [--host <host>]    live visual map in the browser
   prime                                   orientation block for agent context`;
@@ -41,6 +55,14 @@ async function run(argv) {
     const parsed = parseArgs(argv, FLAG_SPEC);
     const dir = strFlag(parsed, 'dir') ?? process.cwd();
     const repoRoot = () => findRepoRoot(dir);
+    // Every command that writes migrates first, so a v1 map is brought to v2
+    // exactly once, by a caller that was going to take the lock anyway.
+    // Read-only commands and hooks never migrate: they demote in memory.
+    const writableRoot = () => {
+        const root = findRepoRoot(dir);
+        migrateOnWrite(root);
+        return root;
+    };
     switch (parsed.command) {
         case 'init': {
             const ancestor = findShapeRootOrNull(dir);
@@ -85,7 +107,7 @@ async function run(argv) {
             const title = cleanText(requireFlag(parsed, 'title'), 'title');
             const addIntent = strFlag(parsed, 'intent');
             let createdId = '';
-            updateShape(repoRoot(), (shape) => {
+            updateShape(writableRoot(), (shape) => {
                 createdId = addNode(shape, parent, {
                     title,
                     slug: strFlag(parsed, 'id'),
@@ -98,7 +120,7 @@ async function run(argv) {
         }
         case 'set': {
             const [id] = requirePositionals(parsed, ['id']);
-            const root = repoRoot();
+            const root = writableRoot();
             const coverage = enumFlag(parsed, 'coverage', COVERAGE_LEVELS);
             const importance = enumFlag(parsed, 'importance', IMPORTANCE_LEVELS);
             const rawIntent = strFlag(parsed, 'intent');
@@ -112,13 +134,17 @@ async function run(argv) {
                 if (!preNode) throw new Error(`node "${id}" not found`);
                 const finalEvidence = evidence.length > 0 ? evidence.map(parseEvidenceSpec) : preNode.evidence ?? [];
                 const template = pre.manifest.verifyCommand;
-                if (template) {
-                    const run = runTestEvidence(root, template, finalEvidence);
-                    if (!run.ok) throw new Error(`verified refused - ${run.detail}`);
+                // Without a runner nothing can execute, so verified would be a
+                // word with no fact behind it. Refuse rather than warn.
+                if (!template) {
+                    throw new Error('verified refused - no verify command configured, so nothing can be executed; use --coverage linked for a named test, or set one with: shape config --verify-command "<cmd with {path} and {name}>"');
                 }
-                else {
-                    console.error('note: verified is unexecuted - set a verify command (shape config --verify-command) to make verified mean the tests pass');
-                }
+                // Checked here as well as in the write below, so the caller
+                // sees the specific gate rather than the runner's "nothing to
+                // execute" symptom of it.
+                requireNamedTest('verified', finalEvidence);
+                const run = runTestEvidence(root, template, finalEvidence);
+                if (!run.ok) throw new Error(`verified refused - ${run.detail}`);
             }
             let becameSuspect = false;
             updateShape(root, (shape) => {
@@ -127,6 +153,12 @@ async function run(argv) {
                     throw new Error(`node "${id}" not found`);
                 if ((node.children?.length ?? 0) > 0 && coverage) {
                     throw new Error(`"${id}" has children - coverage is derived; set it on leaves`);
+                }
+                // Restating the intent and the verdict in one call, while
+                // silently reusing evidence gathered against the OLD intent,
+                // launders a stale assessment into a fresh-looking one.
+                if (intent && coverage && node.coverage && node.coverage !== 'missing' && evidence.length === 0) {
+                    throw new Error(`changing --intent and --coverage together requires fresh --evidence: the stored evidence was assessed against the previous intent of "${id}"`);
                 }
                 const title = strFlag(parsed, 'title');
                 if (title)
@@ -154,12 +186,11 @@ async function run(argv) {
                 }
                 if (coverage) {
                     const finalEvidence = evidence.length > 0 ? node.evidence : boolFlag(parsed, 'clear-evidence') ? [] : node.evidence ?? [];
-                    if ((coverage === 'covered' || coverage === 'verified') && (finalEvidence?.length ?? 0) === 0) {
+                    if (CLAIM_LEVELS.has(coverage) && (finalEvidence?.length ?? 0) === 0) {
                         throw new Error(`"${coverage}" requires --evidence linking the code that realizes the intent; without evidence use partial`);
                     }
-                    if (coverage === 'verified' && !finalEvidence?.some((e) => e.type === 'test')) {
-                        throw new Error('verified requires test evidence (--evidence test:path#name); a claim without a test is covered at best');
-                    }
+                    if (coverage === 'linked' || coverage === 'verified')
+                        requireNamedTest(coverage, finalEvidence);
                     node.coverage = coverage;
                     delete node.suspect;
                     node.assessed = { at: todayISO(), gitRef: gitShortRef(root) };
@@ -170,7 +201,7 @@ async function run(argv) {
         }
         case 'rm': {
             const [id] = requirePositionals(parsed, ['id']);
-            updateShape(repoRoot(), (shape) => {
+            updateShape(writableRoot(), (shape) => {
                 const node = findNode(shape, id);
                 if (!node)
                     throw new Error(`node "${id}" not found`);
@@ -185,29 +216,45 @@ async function run(argv) {
         case 'mv': {
             const [id, newParent] = requirePositionals(parsed, ['id', 'new-parent']);
             let movedId = '';
-            updateShape(repoRoot(), (shape) => {
+            updateShape(writableRoot(), (shape) => {
                 movedId = moveNode(shape, id, newParent).id;
             });
             console.log(`moved to ${movedId}`);
             return;
         }
         case 'config': {
-            const root = repoRoot();
             const template = strFlag(parsed, 'verify-command');
             if (template === undefined) {
-                const shape = loadShape(root);
+                const shape = loadShape(repoRoot());
                 console.log(JSON.stringify({ name: shape.manifest.name, verifyCommand: shape.manifest.verifyCommand ?? null }, null, 2));
                 return;
             }
-            updateShape(root, (shape) => {
-                if (template === 'none') delete shape.manifest.verifyCommand;
-                else shape.manifest.verifyCommand = template;
+            let demoted = 0;
+            updateShape(writableRoot(), (shape) => {
+                if (template !== 'none') {
+                    shape.manifest.verifyCommand = template;
+                    return;
+                }
+                // Removing the runner removes the only thing that made verified
+                // mean "executed". Every such claim falls back to linked in the
+                // same write, so the map is never briefly lying.
+                delete shape.manifest.verifyCommand;
+                for (const area of shape.areas) {
+                    walk(area, (node) => {
+                        if (node.coverage === 'verified') {
+                            node.coverage = 'linked';
+                            demoted++;
+                        }
+                    });
+                }
             });
-            console.log(template === 'none' ? 'verify command cleared' : `verify command set: ${template}`);
+            console.log(template === 'none'
+                ? `verify command cleared${demoted > 0 ? ` (${demoted} verified node(s) demoted to linked)` : ''}`
+                : `verify command set: ${template}`);
             return;
         }
         case 'audit': {
-            const root = repoRoot();
+            const root = writableRoot();
             let findings = [];
             let suspects = 0;
             updateShape(root, (shape) => {
@@ -240,39 +287,29 @@ async function run(argv) {
                             }
                         });
                         for (const f of failed) {
-                            findings.push({ id: f.id, kind: 'drifted', detail: `test run failed: ${f.detail}` });
+                            findings.push({ id: f.id, detail: `test run failed: ${f.detail}` });
                         }
                         suspects += failed.length;
                     }
                 }
             }
             for (const finding of findings) {
-                console.log(`${finding.kind === 'drifted' ? 'SUSPECT' : 'WARN   '} ${finding.id}: ${finding.detail}`);
+                console.log(`SUSPECT ${finding.id}: ${finding.detail}`);
             }
             if (suspects > 0) {
-                console.log(`${suspects} suspect node(s) - re-assess against the code, then run: shape review <id>`);
+                console.log(`${suspects} suspect node(s) - re-assess against the code, then re-assert: shape set <id> --coverage <level> --evidence <fresh evidence>`);
                 process.exitCode = 1;
             }
             else {
-                console.log(`audit clean${findings.length > 0 ? ` (${findings.length} warning(s))` : ''}`);
+                console.log('audit clean');
             }
             return;
         }
-        case 'review': {
-            const [id] = requirePositionals(parsed, ['id']);
-            const root = repoRoot();
-            updateShape(root, (shape) => {
-                const node = findNode(shape, id);
-                if (!node)
-                    throw new Error(`node "${id}" not found`);
-                delete node.suspect;
-                if (node.evidence)
-                    node.evidence = fingerprintEvidence(root, node.evidence);
-                node.assessed = { at: todayISO(), gitRef: gitShortRef(root) };
-            });
-            console.log(`reviewed ${id} - suspect cleared, evidence re-fingerprinted`);
-            return;
-        }
+        case 'review':
+            // review cleared suspicion by re-stamping the same claim, which is
+            // how an unexamined claim survived an audit. Clearing it now costs
+            // a real re-assertion.
+            throw new Error('review was removed: clearing suspect requires re-asserting the claim, so run shape set <id> --coverage <level> --evidence <fresh evidence> instead');
         case 'snapshot': {
             const root = repoRoot();
             const { decorateShape } = await import('../lib/decorate.mjs');

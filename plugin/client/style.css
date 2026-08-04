@@ -10,6 +10,7 @@
   --gap: #d13438;
   --partial: #c78a15;
   --covered: #2c9a4a;
+  --linked: #1f8fa8;
   --verified: #0fa88a;
 }
 
@@ -26,6 +27,7 @@
     --gap: #f2686c;
     --partial: #e0aa3e;
     --covered: #4fc06f;
+    --linked: #4bc6e0;
     --verified: #2ed3b0;
   }
 }
@@ -175,6 +177,9 @@ button:hover,
 }
 .glyph.covered {
   color: var(--covered);
+}
+.glyph.linked {
+  color: var(--linked);
 }
 .glyph.verified {
   color: var(--verified);

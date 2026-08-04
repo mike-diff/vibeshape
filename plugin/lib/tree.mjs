@@ -1,4 +1,4 @@
-import { SLUG_PATTERN } from './schema.mjs';
+import { MAX_SLUG_SEGMENT, SLUG_PATTERN } from './schema.mjs';
 
 export function slugify(text) {
     const slug = text
@@ -47,6 +47,9 @@ export function addNode(shape, parentId, options) {
     const slug = options.slug ?? slugify(options.title);
     if (!SLUG_PATTERN.test(slug)) {
         throw new Error(`invalid id "${slug}" - must be a kebab-case slug (lowercase letters, digits, hyphens)`);
+    }
+    if (slug.length > MAX_SLUG_SEGMENT) {
+        throw new Error(`id "${slug}" is ${slug.length} chars (max ${MAX_SLUG_SEGMENT}) - shorten the title or pass a shorter --id`);
     }
     const node = { id: slug, title: options.title };
     if (options.intent)

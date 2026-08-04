@@ -1,9 +1,13 @@
-export const COVERAGE_LEVELS = ['missing', 'gap', 'partial', 'covered', 'verified'];
+export const COVERAGE_LEVELS = ['missing', 'gap', 'partial', 'covered', 'linked', 'verified'];
 export const IMPORTANCE_LEVELS = ['core', 'high', 'normal', 'low'];
 export const EVIDENCE_TYPES = ['file', 'test', 'other'];
 
 /**
- * @typedef {'missing'|'gap'|'partial'|'covered'|'verified'} Coverage
+ * linked and verified both cite named tests; only verified means those tests
+ * were executed and passed at assertion time. linked is the honest resting
+ * place for a claim whose tests exist but were never run by the tool.
+ *
+ * @typedef {'missing'|'gap'|'partial'|'covered'|'linked'|'verified'} Coverage
  * @typedef {'core'|'high'|'normal'|'low'} Importance
  *
  * @typedef {object} Evidence

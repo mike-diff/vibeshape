@@ -3,6 +3,8 @@ import { join } from 'node:path';
 import { parseManifest, parseNode, validateAreaTree } from './schema.mjs';
 import { serializeArea, serializeManifest } from './serialize.mjs';
 export const SHAPE_DIR = '.shape';
+/** v2 split the old unexecuted "verified" into linked (named) and verified (run). */
+export const SCHEMA_VERSION = 2;
 const MANIFEST_FILE = 'shape.json';
 const LOCK_STALE_MS = 5_000;
 const LOCK_RETRIES = 100;
@@ -23,7 +25,7 @@ export function initShape(repoRoot, name) {
     if (shapeExists(repoRoot))
         throw new Error(`${SHAPE_DIR}/ already initialized`);
     mkdirSync(dir, { recursive: true });
-    const shape = { manifest: { name, schemaVersion: 1, areas: [] }, areas: [] };
+    const shape = { manifest: { name, schemaVersion: SCHEMA_VERSION, areas: [] }, areas: [] };
     atomicWrite(join(dir, MANIFEST_FILE), serializeManifest(shape.manifest));
     // Generated files stay out of version control.
     atomicWrite(join(dir, '.gitignore'), 'snapshot.html\n.lock/\n*.tmp-*\n');
@@ -40,7 +42,22 @@ export function loadShape(repoRoot) {
         }
         return root;
     });
-    return { manifest, areas };
+    const shape = { manifest, areas };
+    // A v1 "verified" was never executed by this tool, so it may not be shown
+    // as one. Demote in memory for every reader; migrate.mjs is what earns
+    // verified back on disk by actually running the cited tests.
+    if (manifest.schemaVersion === 1) {
+        for (const area of areas)
+            demoteVerified(area);
+        Object.defineProperty(shape, 'legacyVersion', { value: 1, enumerable: false });
+    }
+    return shape;
+}
+function demoteVerified(node) {
+    if (node.coverage === 'verified')
+        node.coverage = 'linked';
+    for (const child of node.children ?? [])
+        demoteVerified(child);
 }
 /**
  * Persists the manifest and every area file, removing area files that no
@@ -48,7 +65,10 @@ export function loadShape(repoRoot) {
  */
 export function saveShape(repoRoot, shape) {
     const dir = shapeDirPath(repoRoot);
-    writeIfChanged(join(dir, MANIFEST_FILE), serializeManifest(shape.manifest));
+    // Anything written by this version is v2 by definition: the in-memory
+    // shape has already been through the v1 demotion on load. Stamp a copy so
+    // saving never mutates the caller's shape out from under it.
+    writeIfChanged(join(dir, MANIFEST_FILE), serializeManifest({ ...shape.manifest, schemaVersion: SCHEMA_VERSION }));
     for (const area of shape.areas) {
         writeIfChanged(join(dir, `${area.id}.json`), serializeArea(area));
     }

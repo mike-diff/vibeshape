@@ -83,6 +83,20 @@ describe('viewer server', () => {
     assert.equal(shape.counts.missing, 1);
   });
 
+  it('counts linked leaves and stored suspects for the header split', async () => {
+    const area = mixedArea();
+    area.children[1].coverage = 'linked';
+    area.children[1].suspect = true;
+    const viewer = await start(fixtureRepo(area));
+    /** @type {DecoratedShape} */
+    const shape = await (await fetch(`${viewer.url}/shape`)).json();
+
+    assert.equal(shape.counts.linked, 1);
+    assert.equal(shape.counts.verified, 0);
+    assert.equal(shape.suspectCount, 1, 'suspectCount counts stored flags, not the derived rollup');
+    assert.equal(shape.areas[0].derived.coverage, 'covered', 'covered + linked children derive covered');
+  });
+
   it('reports suspect on ancestors of a flagged node', async () => {
     const area = mixedArea();
     area.children[1].suspect = true;

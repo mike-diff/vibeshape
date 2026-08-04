@@ -1,9 +1,8 @@
 /**
- * The appshape viewer client. No imports, no bundler: gen-client.mjs inlines this
- * file into index.html. Types are mirrored from src/decorate.ts via JSDoc so
- * `tsc --checkJs` can hold them honest.
+ * The appshape viewer client. No imports, no bundler: lib/server.mjs inlines
+ * this file into the page it serves. Types mirror lib/decorate.mjs via JSDoc.
  *
- * @typedef {'missing' | 'gap' | 'partial' | 'covered' | 'verified'} Coverage
+ * @typedef {'missing' | 'gap' | 'partial' | 'covered' | 'linked' | 'verified'} Coverage
  *
  * @typedef {object} Derived
  * @property {Coverage} coverage
@@ -23,6 +22,7 @@
  * @property {string} name
  * @property {Derived} derived
  * @property {Record<Coverage, number>} counts
+ * @property {number} suspectCount
  * @property {DecoratedNode[]} areas
  *
  * @typedef {object} RowElements
@@ -47,10 +47,14 @@ const GLYPH = {
   gap: '○',
   partial: '◐',
   covered: '●',
+  linked: '◆',
   verified: '✔',
 };
 
 const DEFAULT_EXPAND_DEPTH = 2;
+
+/** Levels that count as closed work, hidden by the gaps-only filter. */
+const CLOSED = ['covered', 'linked', 'verified'];
 
 /** Ids explicitly collapsed by the user; everything else follows depth defaults. */
 const collapsed = new Set();
@@ -89,7 +93,7 @@ function must(id) {
 function isVisible(node) {
   if (!gapsOnly) return true;
   if (node.derived.suspect) return true;
-  return node.derived.coverage !== 'covered' && node.derived.coverage !== 'verified';
+  return !CLOSED.includes(node.derived.coverage);
 }
 
 /**
@@ -256,7 +260,10 @@ function render() {
 /** @param {DecoratedShape} current */
 function renderHeader(current) {
   must('app-name').textContent = current.name;
-  must('overall').textContent = `${current.derived.percent}%`;
+  // The same honest split the CLI header carries: how much is executed fact,
+  // how much is a named-but-unrun claim, how much is under suspicion.
+  must('overall').textContent =
+    `${current.derived.percent}% asserted (V ${current.counts.verified} L ${current.counts.linked} ?${current.suspectCount})`;
   const counts = must('counts');
   counts.textContent = '';
   for (const entry of Object.entries(current.counts)) {

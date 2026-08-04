@@ -3,6 +3,7 @@ const COVERAGE_SCORE = {
     gap: 0.15,
     partial: 0.5,
     covered: 1,
+    linked: 1,
     verified: 1,
 };
 const IMPORTANCE_WEIGHT = {
@@ -19,7 +20,8 @@ function isLeaf(node) {
 }
 /**
  * Derived coverage. Leaves assert their own; parents follow the
- * OpenFastTrace deep-coverage rule: covered only when every child is.
+ * OpenFastTrace deep-coverage rule: a parent never claims more than its
+ * weakest child, so a single unexecuted child pulls verified down to linked.
  */
 export function derivedCoverage(node) {
     if (isLeaf(node))
@@ -27,7 +29,9 @@ export function derivedCoverage(node) {
     const children = node.children.map(derivedCoverage);
     if (children.every((c) => c === 'verified'))
         return 'verified';
-    if (children.every((c) => c === 'covered' || c === 'verified'))
+    if (children.every((c) => c === 'linked' || c === 'verified'))
+        return 'linked';
+    if (children.every((c) => c === 'covered' || c === 'linked' || c === 'verified'))
         return 'covered';
     if (children.every((c) => c === 'missing'))
         return 'missing';
