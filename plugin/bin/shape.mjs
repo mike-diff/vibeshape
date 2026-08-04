@@ -28,7 +28,7 @@ const FLAG_SPEC = {
     value: ['name', 'area', 'budget', 'title', 'id', 'intent', 'importance', 'coverage', 'gap', 'evidence', 'port', 'host', 'out', 'verify-command'],
     boolean: ['compact', 'gaps', 'clear-gap', 'clear-evidence', 'force', 'help', 'run'],
 };
-const USAGE = `appshape: a living coverage map for agent-built apps
+const USAGE = `vibeshape: a living coverage map for agent-built apps
 
 usage: shape [--dir <path>] <command>
 
@@ -67,7 +67,7 @@ async function run(argv) {
         case 'init': {
             const ancestor = findShapeRootOrNull(dir);
             if (ancestor !== null) {
-                throw new Error(`already inside the appshape map at ${ancestor} - run shape there, or init a directory outside it`);
+                throw new Error(`already inside the vibeshape map at ${ancestor} - run shape there, or init a directory outside it`);
             }
             const name = strFlag(parsed, 'name') ?? basename(dir);
             initShape(dir, name);
@@ -324,7 +324,7 @@ async function run(argv) {
         case 'view': {
             const { startViewer } = await import('../lib/server.mjs');
             const viewer = await startViewer(repoRoot(), intFlag(parsed, 'port'), strFlag(parsed, 'host'));
-            console.log(`appshape viewer at ${viewer.url}  (ctrl-c to stop)`);
+            console.log(`vibeshape viewer at ${viewer.url}  (ctrl-c to stop)`);
             return;
         }
         case 'prime': {

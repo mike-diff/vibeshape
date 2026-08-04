@@ -38,7 +38,7 @@ function writeJson(file, value) {
  * @returns {string}
  */
 function fixtureRepo(area) {
-  const repo = mkdtempSync(join(tmpdir(), 'appshape-viewer-'));
+  const repo = mkdtempSync(join(tmpdir(), 'vibeshape-viewer-'));
   temps.push(repo);
   const dir = join(repo, '.shape');
   mkdirSync(dir);

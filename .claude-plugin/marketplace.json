@@ -1,11 +1,11 @@
 {
-  "name": "appshape",
+  "name": "vibeshape",
   "owner": {
     "name": "mike-diff"
   },
   "plugins": [
     {
-      "name": "appshape",
+      "name": "vibeshape",
       "source": "./plugin",
       "description": "Living coverage map for agent-built apps: consult, maintain, and audit the .shape/ tree"
     }

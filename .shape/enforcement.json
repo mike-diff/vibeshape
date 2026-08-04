@@ -35,18 +35,18 @@
         {
           "type": "file",
           "path": "plugin/scripts/inject-tree.mjs",
-          "hash": "0a7a8d0b6ab1406c"
+          "hash": "25cd7a9dd255bbd2"
         },
         {
           "type": "test",
           "path": "tests/hooks.test.mjs",
           "name": "injects the full orientation on first prompt",
-          "hash": "985c48c4d7668d8e"
+          "hash": "b880b7a42add4bf9"
         }
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "839d0d9"
+        "gitRef": "23b218d"
       }
     },
     {
@@ -58,7 +58,7 @@
         {
           "type": "file",
           "path": "plugin/scripts/track-edits.mjs",
-          "hash": "3b11851a2e289f43"
+          "hash": "8ecec4003ad16226"
         },
         {
           "type": "test",
@@ -69,7 +69,7 @@
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "839d0d9"
+        "gitRef": "23b218d"
       }
     },
     {
@@ -81,7 +81,7 @@
         {
           "type": "file",
           "path": "plugin/scripts/remind-delegation.mjs",
-          "hash": "f044c75d3f7dfefb"
+          "hash": "1230475a4b168428"
         },
         {
           "type": "test",
@@ -92,7 +92,7 @@
       ],
       "assessed": {
         "at": "2026-08-04",
-        "gitRef": "839d0d9"
+        "gitRef": "23b218d"
       }
     },
     {

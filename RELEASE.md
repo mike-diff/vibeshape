@@ -1,4 +1,4 @@
-# appshape 1.0 release checklist
+# vibeshape 1.0 release checklist
 
 Target: a public GitHub repo anyone can use with two commands, and a plugin
 declared complete. Items marked (impl) are code work tracked in `.shape/`;
@@ -37,12 +37,12 @@ the rest are release operations.
 - [ ] LICENSE (MIT) and copyright line
 - [ ] CI: GitHub Actions running `node --test tests/*.test.mjs` on push,
       Node 20.11+/22/24 matrix (no install step needed; import.meta.dirname sets the 20.11 floor)
-- [ ] Name check: search for collisions on "appshape" and `.shape/` before
+- [ ] Name check: search for collisions on "vibeshape" and `.shape/` before
       the name is public
-- [ ] Public repo `mike-diff/appshape`, topics, description, social preview
+- [ ] Public repo `mike-diff/vibeshape`, topics, description, social preview
 - [ ] Verify the GitHub install path end to end from a clean machine:
-      `claude plugin marketplace add mike-diff/appshape` then
-      `claude plugin install appshape@appshape`
+      `claude plugin marketplace add mike-diff/vibeshape` then
+      `claude plugin install vibeshape@vibeshape`
 - [ ] Version 1.0.0 in plugin.json, tagged release with notes
 - [ ] Self-host: this repo carries its own `.shape/` map and runs the plugin
       on itself; the map is the living roadmap after 1.0

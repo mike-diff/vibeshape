@@ -15,7 +15,7 @@ const tempDirs = [];
 let sessionCounter = 0;
 
 function tempRepo() {
-  const dir = mkdtempSync(join(tmpdir(), 'appshape-hooks-'));
+  const dir = mkdtempSync(join(tmpdir(), 'vibeshape-hooks-'));
   tempDirs.push(dir);
   return dir;
 }
@@ -160,7 +160,7 @@ describe('inject-tree hook', () => {
     const repo = mappedRepo();
     const s = session(repo);
     const first = hook('inject-tree.mjs', { ...s, hook_event_name: 'UserPromptSubmit' });
-    assert.match(first.hookSpecificOutput.additionalContext, /appshape coverage map/);
+    assert.match(first.hookSpecificOutput.additionalContext, /vibeshape coverage map/);
     assert.match(first.hookSpecificOutput.additionalContext, /area\/one/);
     assert.equal(hook('inject-tree.mjs', { ...s, hook_event_name: 'UserPromptSubmit' }), null);
   });
@@ -286,7 +286,7 @@ describe('hook input validation', () => {
       encoding: 'utf8',
       cwd: repo,
     });
-    assert.match(fallback, /appshape coverage map/);
+    assert.match(fallback, /vibeshape coverage map/);
   });
 });
 
@@ -342,7 +342,7 @@ describe('injection transaction', () => {
   it('steals only a stale lock whose creator is gone, and releases its own', () => {
     const repo = mappedRepo();
     const s = session(repo);
-    const lock = join(tmpdir(), `appshape-txn-${sessionKey(repo, s)}`);
+    const lock = join(tmpdir(), `vibeshape-txn-${sessionKey(repo, s)}`);
     const stale = new Date(Date.now() - STALE_LOCK_AGE_MS);
 
     writeFileSync(lock, String(process.pid)); // fresh, creator alive

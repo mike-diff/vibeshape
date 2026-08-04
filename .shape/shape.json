@@ -1,5 +1,5 @@
 {
-  "name": "appshape",
+  "name": "vibeshape",
   "schemaVersion": 2,
   "verifyCommand": "node --test --test-name-pattern {name} {path}",
   "areas": [

@@ -13,7 +13,7 @@ console.log(
     hookSpecificOutput: {
       hookEventName: 'PreToolUse',
       additionalContext:
-        'Delegation check: this repo has an appshape map, and subagents do not receive it automatically. ' +
+        'Delegation check: this repo has a vibeshape map, and subagents do not receive it automatically. ' +
         'If this teammate will build or change features, include the relevant shape node ids and intents in its prompt, ' +
         'and apply resulting coverage updates via the shape CLI when it reports back.',
     },

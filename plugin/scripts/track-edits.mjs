@@ -25,4 +25,4 @@ const sessionKey = createHash('sha256')
   .update(`${repoRoot}\n${input.session_id ?? ''}`)
   .digest('hex')
   .slice(0, 16);
-appendFileSync(join(tmpdir(), `appshape-edits-${sessionKey}`), `${rel}\n`);
+appendFileSync(join(tmpdir(), `vibeshape-edits-${sessionKey}`), `${rel}\n`);

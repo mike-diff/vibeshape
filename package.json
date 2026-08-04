@@ -1,5 +1,5 @@
 {
-  "name": "appshape-repo",
+  "name": "vibeshape-repo",
   "private": true,
   "scripts": {
     "test": "node --test tests/*.test.mjs"

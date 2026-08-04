@@ -10,7 +10,7 @@ import { addNode } from '../plugin/lib/tree.mjs';
 const tempDirs = [];
 
 function tempRepo() {
-  const dir = mkdtempSync(join(tmpdir(), 'appshape-test-'));
+  const dir = mkdtempSync(join(tmpdir(), 'vibeshape-test-'));
   tempDirs.push(dir);
   return dir;
 }

@@ -1,10 +1,10 @@
-# appshape
+# vibeshape
 
 A living coverage map for agent-built apps.
 
 When you build software with AI agents, the app's intended shape lives nowhere:
 tasks get consumed, specs go stale, and neither you nor the agent can see what
-the app is supposed to do versus what the code actually covers. appshape gives
+the app is supposed to do versus what the code actually covers. vibeshape gives
 that picture a home: a `.shape/` folder holding a tree of the app's intended
 surface (features, use cases, user stories), where every leaf is scored for how
 well the code covers that intent. Humans read it visually and steer; agents
@@ -54,12 +54,12 @@ Each node carries an intent, a coverage verdict, and the evidence behind it:
 No build, no install step, no dependencies beyond Node: the repo is the plugin.
 
 ```sh
-git clone <this repo> ~/appshape
-claude plugin marketplace add ~/appshape
-claude plugin install appshape@appshape --scope project
+git clone <this repo> ~/vibeshape
+claude plugin marketplace add ~/vibeshape
+claude plugin install vibeshape@vibeshape --scope project
 ```
 
-Or use the CLI directly without Claude Code (add `~/appshape/plugin/bin` to PATH):
+Or use the CLI directly without Claude Code (add `~/vibeshape/plugin/bin` to PATH):
 
 ```sh
 cd your-app

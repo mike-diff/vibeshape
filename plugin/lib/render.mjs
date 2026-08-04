@@ -205,7 +205,7 @@ function renderNode(node, depth, lines, options, isArea = false, recurse = true)
 export const DEFAULT_BUDGET_NODES = 120;
 export function renderPrime(shape, budgetNodes = DEFAULT_BUDGET_NODES) {
     return [
-        'This repo has an appshape coverage map in .shape/ - a living tree of intended',
+        'This repo has a vibeshape coverage map in .shape/ - a living tree of intended',
         'features scored against the code. Consult it before choosing work; update it',
         'after building. Never edit .shape/*.json directly; use the shape CLI:',
         '  shape tree --compact         current map (statuses: V verified, L linked, C covered, P partial, G gap, M missing, ? suspect)',

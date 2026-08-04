@@ -12,7 +12,7 @@ const execFileAsync = promisify(execFile);
 const tempDirs = [];
 
 function tempRepo() {
-  const dir = mkdtempSync(join(tmpdir(), 'appshape-cli-'));
+  const dir = mkdtempSync(join(tmpdir(), 'vibeshape-cli-'));
   tempDirs.push(dir);
   return dir;
 }
@@ -716,12 +716,12 @@ describe('shape CLI', () => {
     const withAgents = tempRepo();
     writeFileSync(join(withAgents, 'AGENTS.md'), '# Doctrine\n');
     shape(withAgents, 'init', '--name', 'demo');
-    assert.ok(readFileSync(join(withAgents, 'AGENTS.md'), 'utf8').includes('<!-- APPSHAPE START -->'));
+    assert.ok(readFileSync(join(withAgents, 'AGENTS.md'), 'utf8').includes('<!-- VIBESHAPE START -->'));
 
     const without = tempRepo();
     shape(without, 'init', '--name', 'demo');
     assert.equal(existsSync(join(without, 'AGENTS.md')), false);
-    assert.ok(readFileSync(join(without, 'CLAUDE.md'), 'utf8').includes('<!-- APPSHAPE START -->'));
+    assert.ok(readFileSync(join(without, 'CLAUDE.md'), 'utf8').includes('<!-- VIBESHAPE START -->'));
   });
 
   it('snapshot writes a self-contained HTML file with embedded shape data', () => {
@@ -739,8 +739,23 @@ describe('shape CLI', () => {
     shape(repo, 'init', '--name', 'demo');
     const content = readFileSync(join(repo, 'CLAUDE.md'), 'utf8');
     assert.ok(content.includes('# My project'));
-    assert.ok(content.includes('<!-- APPSHAPE START -->'));
-    assert.equal(content.match(/APPSHAPE START/g).length, 1);
+    assert.ok(content.includes('<!-- VIBESHAPE START -->'));
+    assert.equal(content.match(/VIBESHAPE START/g).length, 1);
+  });
+
+  it('init replaces a legacy APPSHAPE block instead of stacking a second one', () => {
+    const repo = tempRepo();
+    writeFileSync(
+      join(repo, 'CLAUDE.md'),
+      '# My project\n<!-- APPSHAPE START -->\nold guidance\n<!-- APPSHAPE END -->\ntrailing prose\n'
+    );
+    shape(repo, 'init', '--name', 'demo');
+    const content = readFileSync(join(repo, 'CLAUDE.md'), 'utf8');
+    assert.ok(content.includes('# My project'));
+    assert.ok(content.includes('trailing prose'));
+    assert.ok(!content.includes('APPSHAPE'));
+    assert.ok(!content.includes('old guidance'));
+    assert.equal(content.match(/VIBESHAPE START/g).length, 1);
   });
 
   it('audit flags a claim as suspect when its evidence file changes, re-asserting clears it', () => {
@@ -929,7 +944,7 @@ describe('shape CLI', () => {
     shape(repo, 'init', '--name', 'outer');
     const sub = join(repo, 'packages', 'web');
     mkdirSync(sub, { recursive: true });
-    assert.throws(() => shape(sub, 'init', '--name', 'inner'), /already inside the appshape map/);
+    assert.throws(() => shape(sub, 'init', '--name', 'inner'), /already inside the vibeshape map/);
     assert.equal(existsSync(join(sub, '.shape')), false);
   });
 

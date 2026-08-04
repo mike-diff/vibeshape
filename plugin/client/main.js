@@ -1,5 +1,5 @@
 /**
- * The appshape viewer client. No imports, no bundler: lib/server.mjs inlines
+ * The vibeshape viewer client. No imports, no bundler: lib/server.mjs inlines
  * this file into the page it serves. Types mirror lib/decorate.mjs via JSDoc.
  *
  * @typedef {'missing' | 'gap' | 'partial' | 'covered' | 'linked' | 'verified'} Coverage
