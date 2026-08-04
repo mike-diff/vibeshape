@@ -1,15 +1,11 @@
 // PreToolUse guard: .shape/*.json is CLI-managed; direct edits corrupt the map.
 // Covers file tools (Write|Edit|MultiEdit) and common Bash write patterns.
 // This is a guardrail against the default edit paths, not a security boundary.
-import { readFileSync } from 'node:fs';
 import { posix } from 'node:path';
+import { readHookInput } from '../lib/hook-input.mjs';
 
-let input = {};
-try {
-  input = JSON.parse(readFileSync(0, 'utf8'));
-} catch {
-  process.exit(0);
-}
+const input = readHookInput();
+if (!input) process.exit(0);
 
 const SHAPE_JSON = /(^|\/)\.shape\/[^/]+\.json$/;
 

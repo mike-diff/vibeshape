@@ -1,14 +1,10 @@
 // PreToolUse (Task): subagents never receive the shape injection, so remind
 // the lead at the exact delegation moment to carry the map into the brief.
-import { readFileSync } from 'node:fs';
 import { findShapeRootOrNull } from '../lib/repo.mjs';
+import { readHookInput } from '../lib/hook-input.mjs';
 
-let input = {};
-try {
-  input = JSON.parse(readFileSync(0, 'utf8'));
-} catch {
-  process.exit(0);
-}
+const input = readHookInput();
+if (!input) process.exit(0);
 
 if (!findShapeRootOrNull(input.cwd || process.env.CLAUDE_PROJECT_DIR || process.cwd())) process.exit(0);
 

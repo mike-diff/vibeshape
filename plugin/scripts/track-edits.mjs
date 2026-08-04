@@ -2,18 +2,15 @@
 // ledger so the injector can flag edits that no shape node references.
 // The audit verifies claims made; this closes the omission side.
 // Append-only: parallel hook invocations must never lose each other's lines.
-import { appendFileSync, readFileSync } from 'node:fs';
+import { appendFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
 import { findShapeRootOrNull } from '../lib/repo.mjs';
+import { readHookInput } from '../lib/hook-input.mjs';
 
-let input = {};
-try {
-  input = JSON.parse(readFileSync(0, 'utf8'));
-} catch {
-  process.exit(0);
-}
+const input = readHookInput();
+if (!input) process.exit(0);
 
 const filePath = input.tool_input?.file_path;
 if (!filePath) process.exit(0);
