@@ -1,4 +1,4 @@
-import { hashFile } from './fingerprint.mjs';
+import { evidenceHash, hashFile } from './fingerprint.mjs';
 import { walk } from './tree.mjs';
 const CLAIMS_COVERAGE = new Set(['partial', 'covered', 'verified']);
 /**
@@ -27,11 +27,20 @@ export function auditShape(repoRoot, shape) {
 }
 function evidenceDrift(repoRoot, node) {
     for (const evidence of node.evidence ?? []) {
-        const current = hashFile(repoRoot, evidence.path);
-        if (current === null)
-            return `${evidence.path} no longer exists`;
-        if (evidence.hash && current !== evidence.hash)
-            return `${evidence.path} changed since assessment`;
+        // Named evidence is hashed at unit scope: unrelated edits to the same
+        // file do not invalidate the claim, but the cited unit changing or
+        // vanishing does.
+        const current = evidenceHash(repoRoot, evidence.path, evidence.name);
+        if (current === null) {
+            if (hashFile(repoRoot, evidence.path) === null)
+                return `${evidence.path} no longer exists`;
+            return `"${evidence.name}" no longer found in ${evidence.path}`;
+        }
+        if (evidence.hash && current !== evidence.hash) {
+            return evidence.name
+                ? `"${evidence.name}" in ${evidence.path} changed since assessment`
+                : `${evidence.path} changed since assessment`;
+        }
     }
     return null;
 }

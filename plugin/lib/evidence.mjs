@@ -1,5 +1,5 @@
 import { EVIDENCE_TYPES } from './types.mjs';
-import { hashFile } from './fingerprint.mjs';
+import { evidenceHash, hashFile } from './fingerprint.mjs';
 /**
  * Parses an evidence spec of the form `type:path` or `type:path#name`,
  * e.g. `file:src/auth/oauth.ts`, `test:tests/auth.test.ts#oauth login`.
@@ -26,7 +26,12 @@ export function parseEvidenceSpec(spec) {
 /** Stamps content hashes onto evidence whose files exist under repoRoot. */
 export function fingerprintEvidence(repoRoot, evidence) {
     return evidence.map((e) => {
-        const hash = hashFile(repoRoot, e.path);
+        const hash = evidenceHash(repoRoot, e.path, e.name);
+        if (hash === null && e.name && hashFile(repoRoot, e.path) !== null) {
+            // The file exists but the cited unit does not: a claim naming a
+            // nonexistent test must never enter the map.
+            throw new Error(`"${e.name}" not found in ${e.path} - the cited unit must exist`);
+        }
         return hash ? { ...e, hash } : e;
     });
 }
