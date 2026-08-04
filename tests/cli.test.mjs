@@ -75,7 +75,7 @@ describe('shape CLI', () => {
       () => shape(repo, 'set', 'auth/login', '--coverage', 'verified', '--evidence', 'file:login.ts'),
       /verified requires test evidence/,
     );
-    writeFileSync(join(repo, 'login.test.ts'), 'test\n');
+    writeFileSync(join(repo, 'login.test.ts'), "test('login works', () => { if (!login) throw new Error('no'); });\n");
     shape(repo, 'set', 'auth/login', '--coverage', 'verified', '--evidence', 'file:login.ts', '--evidence', 'test:login.test.ts#login works');
     assert.ok(shape(repo, 'tree', '--compact').includes('[V] auth/login'));
   });
@@ -237,6 +237,99 @@ describe('shape CLI', () => {
     }
     assert.ok(output.includes('SUSPECT auth/login: login.ts no longer exists'));
     assert.ok(output.includes('WARN    auth/oauth-login: covered with no evidence links'));
+  });
+
+  it('refuses evidence naming a unit that does not exist in the file', () => {
+    const repo = seededRepo();
+    writeFileSync(join(repo, 'a.test.mjs'), "test('real thing', () => {});\n");
+    assert.throws(
+      () => shape(repo, 'set', 'auth/login', '--coverage', 'partial', '--evidence', 'test:a.test.mjs#fake name'),
+      /"fake name" not found in a\.test\.mjs/,
+    );
+  });
+
+  it('unit-scoped hashing: unrelated edits to an evidence file do not drift the claim', () => {
+    const repo = seededRepo();
+    writeFileSync(join(repo, 'u.test.mjs'), "test('alpha holds', () => {\n  ok(1);\n});\ntest('beta holds', () => {\n  ok(2);\n});\n");
+    shape(repo, 'set', 'auth/login', '--coverage', 'partial', '--evidence', 'test:u.test.mjs#alpha holds');
+    writeFileSync(join(repo, 'u.test.mjs'), "test('alpha holds', () => {\n  ok(1);\n});\ntest('beta holds', () => {\n  ok(3);\n});\n");
+    assert.ok(shape(repo, 'audit').includes('audit clean'));
+    writeFileSync(join(repo, 'u.test.mjs'), "test('alpha holds', () => {\n  ok(99);\n});\ntest('beta holds', () => {\n  ok(3);\n});\n");
+    let output = '';
+    try {
+      shape(repo, 'audit');
+    } catch (error) {
+      output = error.stdout;
+    }
+    assert.ok(output.includes('"alpha holds" in u.test.mjs changed since assessment'));
+  });
+
+  it('audit reports a named unit that vanished from its file', () => {
+    const repo = seededRepo();
+    writeFileSync(join(repo, 'v.test.mjs'), "test('gamma holds', () => {});\n");
+    shape(repo, 'set', 'auth/login', '--coverage', 'partial', '--evidence', 'test:v.test.mjs#gamma holds');
+    writeFileSync(join(repo, 'v.test.mjs'), "test('renamed entirely', () => {});\n");
+    let output = '';
+    try {
+      shape(repo, 'audit');
+    } catch (error) {
+      output = error.stdout;
+    }
+    assert.ok(output.includes('"gamma holds" no longer found in v.test.mjs'));
+  });
+
+  it('with a verify command, verified requires the cited test to pass right now', () => {
+    const repo = seededRepo();
+    shape(repo, 'config', '--verify-command', 'node --test --test-name-pattern {name} {path}');
+    writeFileSync(join(repo, 'login.ts'), 'export const login = 1;\n');
+    writeFileSync(join(repo, 'ok.test.mjs'), "import { test } from 'node:test';\ntest('login works', () => {});\n");
+    writeFileSync(join(repo, 'bad.test.mjs'), "import { test } from 'node:test';\ntest('login breaks', () => { throw new Error('boom'); });\n");
+    assert.throws(
+      () => shape(repo, 'set', 'auth/login', '--coverage', 'verified', '--evidence', 'file:login.ts', '--evidence', 'test:bad.test.mjs#login breaks'),
+      /verified refused/,
+    );
+    shape(repo, 'set', 'auth/login', '--coverage', 'verified', '--evidence', 'file:login.ts', '--evidence', 'test:ok.test.mjs#login works');
+    assert.ok(shape(repo, 'tree', '--compact').includes('[V] auth/login'));
+  });
+
+  it('audit --run flags a verified node whose test now fails', () => {
+    const repo = seededRepo();
+    shape(repo, 'config', '--verify-command', 'node --test --test-name-pattern {name} {path}');
+    writeFileSync(join(repo, 'login.ts'), 'export const login = 1;\n');
+    writeFileSync(join(repo, 'r.test.mjs'), "import { test } from 'node:test';\ntest('rotates fine', () => {});\n");
+    shape(repo, 'set', 'auth/login', '--coverage', 'verified', '--evidence', 'file:login.ts', '--evidence', 'test:r.test.mjs#rotates fine');
+    assert.ok(shape(repo, 'audit').includes('audit clean'));
+    writeFileSync(join(repo, 'r.test.mjs'), "import { test } from 'node:test';\ntest('rotates fine', () => {});\n");
+    let output = '';
+    try {
+      output = shape(repo, 'audit', '--run');
+    } catch (error) {
+      output = error.stdout;
+    }
+    assert.ok(output.includes('audit clean'), 'passing test stays clean under --run');
+    writeFileSync(join(repo, 'r.test.mjs'), "import { test } from 'node:test';\ntest('rotates fine', () => { throw new Error('regressed'); });\n");
+    shape(repo, 'review', 'auth/login');
+    try {
+      shape(repo, 'audit', '--run');
+      output = '';
+    } catch (error) {
+      output = error.stdout;
+    }
+    assert.ok(output.includes('test run failed'), 'failing test marks the node suspect');
+    assert.ok(shape(repo, 'tree', '--compact').includes('[V?] auth/login'));
+  });
+
+  it('budget digest caps open work at the top importance-sorted items', () => {
+    const repo = tempRepo();
+    shape(repo, 'init', '--name', 'big');
+    shape(repo, 'add', '/', '--title', 'Zone');
+    shape(repo, 'add', 'zone', '--title', 'Vital', '--importance', 'core');
+    for (let i = 0; i < 60; i++) shape(repo, 'add', 'zone', '--title', `Item ${i}`);
+    const digest = shape(repo, 'tree', '--compact', '--budget', '10');
+    const lines = digest.split('\n');
+    assert.ok(lines.length < 50, `digest stays capped (got ${lines.length} lines)`);
+    assert.ok(digest.includes('+21 more open'), 'hidden count reported');
+    assert.ok(lines[2].includes('zone/vital'), 'core item sorts first among open work');
   });
 
   it('sanitizes control characters out of text fields and caps their length', () => {

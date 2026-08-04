@@ -33,9 +33,12 @@ are the cartographer: the map must reflect the territory after every change.
 - `covered` - the code embodies the intent; the CLI refuses this without
   `--evidence`. No evidence means partial, not covered.
 - `verified` - covered AND named tests exercise it; the CLI refuses this
-  without at least one `--evidence test:...` link. Prefer reaching verified
-  over accumulating covered: covered is judgment, verified touches ground
-  truth. When you finish a feature that has tests, always link them.
+  without at least one `--evidence test:path#name` link, and when the repo
+  has a verify command configured (`shape config --verify-command`), the CLI
+  executes the cited tests and refuses verified unless they pass right now.
+  Prefer reaching verified over accumulating covered: covered is judgment,
+  verified is an executed fact. When you finish a feature that has tests,
+  always link them by name.
 
 Never set coverage on a node with children; parents roll up automatically
 (a parent is covered only when every child is).
@@ -103,7 +106,8 @@ shape add / --title <t>                            new top-level area
 shape set <id> [--coverage <level>] [--gap <text>] [--clear-gap] [--evidence type:path[#name]]...
 shape rm <id> [--force]                            remove node/subtree
 shape mv <id> <new-parent>                         move subtree (ids rewritten)
-shape audit                                        flag drifted assessments (nonzero exit if any)
+shape audit [--run]                                flag drifted assessments; --run also executes verified tests (nonzero exit if any)
+shape config [--verify-command <tpl>]              show or set the test-run template ({path}, {name})
 shape review <id>                                  clear a suspect flag after re-assessment
 shape prime                                        this orientation + current tree
 ```
