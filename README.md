@@ -51,7 +51,8 @@ Each node carries an intent, a coverage verdict, and the evidence behind it:
 
 ## Quick start
 
-No build, no install step, no dependencies beyond Node: the repo is the plugin.
+No build, no install step, no dependencies beyond Node 20.11+: the repo is the
+plugin.
 
 ```sh
 git clone <this repo> ~/vibeshape
