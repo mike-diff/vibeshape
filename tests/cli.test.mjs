@@ -1,7 +1,7 @@
 import { afterEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFile, execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
@@ -281,25 +281,30 @@ describe('shape CLI', () => {
   it('with a verify command, verified requires the cited test to pass right now', () => {
     const repo = seededRepo();
     shape(repo, 'config', '--verify-command', 'node --test --test-name-pattern {name} {path}');
-    writeFileSync(join(repo, 'login.ts'), 'export const login = 1;\n');
-    writeFileSync(join(repo, 'ok.test.mjs'), "import { test } from 'node:test';\ntest('login works', () => {});\n");
-    writeFileSync(join(repo, 'bad.test.mjs'), "import { test } from 'node:test';\ntest('login breaks', () => { throw new Error('boom'); });\n");
+    writeFileSync(join(repo, 'login.mjs'), 'export const login = 1;\n');
+    writeFileSync(
+      join(repo, 'ok.test.mjs'),
+      "import { test } from 'node:test';\nimport assert from 'node:assert';\nimport { login } from './login.mjs';\ntest('login works', () => { assert.equal(login, 1); });\n",
+    );
+    writeFileSync(
+      join(repo, 'bad.test.mjs'),
+      "import { test } from 'node:test';\nimport assert from 'node:assert';\nimport { login } from './login.mjs';\ntest('login breaks', () => { assert.equal(login, 2); });\n",
+    );
     assert.throws(
-      () => shape(repo, 'set', 'auth/login', '--coverage', 'verified', '--evidence', 'file:login.ts', '--evidence', 'test:bad.test.mjs#login breaks'),
+      () => shape(repo, 'set', 'auth/login', '--coverage', 'verified', '--evidence', 'file:login.mjs', '--evidence', 'test:bad.test.mjs#login breaks'),
       /verified refused/,
     );
-    shape(repo, 'set', 'auth/login', '--coverage', 'verified', '--evidence', 'file:login.ts', '--evidence', 'test:ok.test.mjs#login works');
+    shape(repo, 'set', 'auth/login', '--coverage', 'verified', '--evidence', 'file:login.mjs', '--evidence', 'test:ok.test.mjs#login works');
     assert.ok(shape(repo, 'tree', '--compact').includes('[V] auth/login'));
   });
 
   it('audit --run flags a verified node whose test now fails', () => {
     const repo = seededRepo();
     shape(repo, 'config', '--verify-command', 'node --test --test-name-pattern {name} {path}');
-    writeFileSync(join(repo, 'login.ts'), 'export const login = 1;\n');
-    writeFileSync(join(repo, 'r.test.mjs'), "import { test } from 'node:test';\ntest('rotates fine', () => {});\n");
-    shape(repo, 'set', 'auth/login', '--coverage', 'verified', '--evidence', 'file:login.ts', '--evidence', 'test:r.test.mjs#rotates fine');
-    assert.ok(shape(repo, 'audit').includes('audit clean'));
-    writeFileSync(join(repo, 'r.test.mjs'), "import { test } from 'node:test';\ntest('rotates fine', () => {});\n");
+    writeFileSync(join(repo, 'login.mjs'), 'export const login = 1;\n');
+    const realTest = "import { test } from 'node:test';\nimport assert from 'node:assert';\nimport { login } from './login.mjs';\ntest('rotates fine', () => { assert.equal(login, 1); });\n";
+    writeFileSync(join(repo, 'r.test.mjs'), realTest);
+    shape(repo, 'set', 'auth/login', '--coverage', 'verified', '--evidence', 'file:login.mjs', '--evidence', 'test:r.test.mjs#rotates fine');
     let output = '';
     try {
       output = shape(repo, 'audit', '--run');
@@ -307,7 +312,8 @@ describe('shape CLI', () => {
       output = error.stdout;
     }
     assert.ok(output.includes('audit clean'), 'passing test stays clean under --run');
-    writeFileSync(join(repo, 'r.test.mjs'), "import { test } from 'node:test';\ntest('rotates fine', () => { throw new Error('regressed'); });\n");
+    // Regress the code the test asserts against, not the test itself.
+    writeFileSync(join(repo, 'login.mjs'), 'export const login = 2;\n');
     shape(repo, 'review', 'auth/login');
     try {
       shape(repo, 'audit', '--run');
@@ -317,6 +323,26 @@ describe('shape CLI', () => {
     }
     assert.ok(output.includes('test run failed'), 'failing test marks the node suspect');
     assert.ok(shape(repo, 'tree', '--compact').includes('[V?] auth/login'));
+  });
+
+  it('a clean audit leaves area files untouched (no mtime churn)', () => {
+    const repo = seededRepo();
+    markCovered(repo, 'auth/login');
+    const areaFile = join(repo, '.shape', 'auth.json');
+    const before = statSync(areaFile).mtimeMs;
+    assert.ok(shape(repo, 'audit').includes('audit clean'));
+    assert.equal(statSync(areaFile).mtimeMs, before);
+  });
+
+  it('prime output is budget-capped like injection', () => {
+    const repo = tempRepo();
+    shape(repo, 'init', '--name', 'huge');
+    const children = Array.from({ length: 130 }, (_, i) => ({ id: `zone/n-${i}`, title: `N ${i}` }));
+    writeFileSync(join(repo, '.shape', 'zone.json'), JSON.stringify({ id: 'zone', title: 'Zone', children }));
+    writeFileSync(join(repo, '.shape', 'shape.json'), JSON.stringify({ name: 'huge', schemaVersion: 1, areas: ['zone'] }));
+    const prime = shape(repo, 'prime');
+    assert.ok(prime.includes('budget mode'), 'prime engages the budget digest');
+    assert.ok(prime.split('\n').length < 80, `prime stays capped (${prime.split('\n').length} lines)`);
   });
 
   it('budget digest caps open work at the top importance-sorted items', () => {
