@@ -1,5 +1,6 @@
 import { afterEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -111,5 +112,28 @@ describe('locking', () => {
     const stale = new Date(Date.now() - 60_000);
     utimesSync(lockDir, stale, stale);
     assert.equal(withLock(repo, () => 'ran'), 'ran');
+  });
+
+  it('steals a stale lock whose recorded owner is dead', () => {
+    const repo = tempRepo();
+    initShape(repo, 'demo');
+    const lockDir = join(repo, '.shape', '.lock');
+    mkdirSync(lockDir);
+    const exited = spawnSync(process.execPath, ['-e', '']);
+    writeFileSync(join(lockDir, 'pid'), String(exited.pid));
+    const stale = new Date(Date.now() - 60_000);
+    utimesSync(lockDir, stale, stale);
+    assert.equal(withLock(repo, () => 'ran'), 'ran');
+  });
+
+  it('refuses to steal from a live owner even past the stale window', () => {
+    const repo = tempRepo();
+    initShape(repo, 'demo');
+    const lockDir = join(repo, '.shape', '.lock');
+    mkdirSync(lockDir);
+    writeFileSync(join(lockDir, 'pid'), String(process.pid));
+    const stale = new Date(Date.now() - 60_000);
+    utimesSync(lockDir, stale, stale);
+    assert.throws(() => withLock(repo, () => 'ran'), /another shape process holds it/);
   });
 });

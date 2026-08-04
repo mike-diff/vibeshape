@@ -1,4 +1,4 @@
-import { mkdirSync, readdirSync, readFileSync, renameSync, rmdirSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { parseManifest, parseNode, validateAreaTree } from './schema.mjs';
 import { serializeArea, serializeManifest } from './serialize.mjs';
@@ -75,7 +75,7 @@ export function withLock(repoRoot, fn) {
     }
     finally {
         try {
-            rmdirSync(lockDir);
+            rmSync(lockDir, { recursive: true, force: true });
         }
         catch {
             // already released
@@ -86,12 +86,15 @@ function acquireLock(lockDir) {
     for (let attempt = 0; attempt < LOCK_RETRIES; attempt++) {
         try {
             mkdirSync(lockDir);
+            writeFileSync(join(lockDir, 'pid'), String(process.pid));
             return;
         }
         catch {
             try {
-                if (Date.now() - statSync(lockDir).mtimeMs > LOCK_STALE_MS) {
-                    rmdirSync(lockDir);
+                // Steal only from a provably dead owner: age alone is not proof,
+                // a slow writer may legitimately hold the lock past the window.
+                if (Date.now() - statSync(lockDir).mtimeMs > LOCK_STALE_MS && !lockOwnerAlive(lockDir)) {
+                    rmSync(lockDir, { recursive: true, force: true });
                     continue;
                 }
             }
@@ -101,7 +104,18 @@ function acquireLock(lockDir) {
             sleepSync(LOCK_RETRY_MS);
         }
     }
-    throw new Error(`could not acquire ${lockDir} - remove it if no other shape process is running`);
+    throw new Error(`could not acquire ${lockDir} - another shape process holds it; remove it only if that process is gone`);
+}
+function lockOwnerAlive(lockDir) {
+    try {
+        const pid = Number(readFileSync(join(lockDir, 'pid'), 'utf8').trim());
+        if (!Number.isInteger(pid) || pid <= 0) return false;
+        process.kill(pid, 0);
+        return true;
+    }
+    catch {
+        return false; // no pid file or process gone: treat as dead
+    }
 }
 function sleepSync(ms) {
     Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
