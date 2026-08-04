@@ -24,7 +24,7 @@ Each node carries an intent, a coverage verdict, and the evidence behind it:
   "id": "auth/oauth-login",
   "title": "OAuth login",
   "intent": "WHEN a user picks a social provider THE SYSTEM SHALL create a session",
-  "coverage": "partial",            // missing | gap | partial | covered | verified
+  "coverage": "partial",            // missing | gap | partial | covered | linked | verified
   "gap": "refresh-token rotation not implemented",
   "importance": "core",             // core | high | normal | low
   "evidence": [{ "type": "file", "path": "src/auth/oauth.ts", "hash": "..." }],
@@ -32,13 +32,22 @@ Each node carries an intent, a coverage verdict, and the evidence behind it:
 }
 ```
 
-- **Leaves assert, parents derive.** A parent is covered only when every child
-  is (deep coverage), so roll-up percentages are honest.
+- **Leaves assert, parents derive.** A parent never claims more than its
+  weakest child (deep coverage), so roll-up percentages are honest.
 - **Claims carry evidence.** `covered` links to the files and tests that
   realize the intent, fingerprinted at assessment time.
+- **`linked` and `verified` are different words.** `linked` means a named test
+  is cited; `verified` means that test was executed and passed at the moment
+  the claim was made. Without a configured verify command nothing can execute,
+  so `verified` is refused outright and `linked` is the honest ceiling.
 - **Drift is caught, not remembered.** `shape audit` re-hashes evidence; if the
   code moved since assessment, the claim turns *suspect* instead of silently
-  lying. `shape review` re-blesses it after re-assessment.
+  lying. Audit also fails claims that were never founded: a claim tier with no
+  evidence, `linked`/`verified` with no named test, evidence with no
+  fingerprint, or `verified` in a repo with no runner.
+- **Suspicion costs a real re-assertion.** There is no "mark it reviewed"
+  command; clearing a suspect flag means running `shape set --coverage` again
+  with fresh evidence, which re-runs every gate.
 
 ## Quick start
 
@@ -62,14 +71,19 @@ shape tree
 ```
 
 ```
-your-app - 50% covered
+your-app 50% asserted (V 0 L 0 ?0)
   ◐ auth Auth 50% [core]
     ◐ auth/oauth-login OAuth login  gap: refresh rotation missing
 ```
 
-`shape view` opens the live visual map in your browser: color-coded coverage,
-importance weighting, a gaps-only filter, and live updates as the shape file
-changes. Click any node to copy a ready-made steering prompt for your agent.
+The header says *asserted*, not *covered*, because the percentage counts claims
+made, not truths proven. `V` and `L` split those claims into executed
+(`verified`) and merely cited (`linked`); `?` counts nodes currently suspect.
+
+`shape view` serves the live visual map and prints its URL for you to open:
+color-coded coverage, importance weighting, a gaps-only filter, and live
+updates as the shape file changes. Click any node to copy a ready-made
+steering prompt for your agent.
 
 ## Claude Code integration
 
@@ -94,11 +108,46 @@ shape show <id>            full node detail plus derived status
 shape add <parent> ...     add a node (/ as parent creates a top-level area)
 shape set <id> ...         update coverage, gap, intent, importance, evidence
 shape rm / shape mv        remove or move a subtree
-shape audit                flag drifted claims as suspect (nonzero exit for CI)
-shape review <id>          clear a suspect flag after re-assessment
-shape view                 live visual map in the browser
+shape audit                flag drifted and unfounded claims suspect (nonzero exit for CI)
+shape config               show or set the verify command that makes verified executable
+shape view                 serve the live visual map (prints a URL)
 shape prime                orientation block for agent context
 ```
+
+Clearing a suspect flag is deliberately not a command: re-assert the claim with
+`shape set <id> --coverage <level> --evidence <fresh evidence>`.
+
+## Schema versions
+
+Maps written before this version are `schemaVersion 1`, where `verified` meant
+only that a test was named. Reading a v1 map shows those nodes as `linked`; it
+is never displayed as verified. The first command that writes to the map
+migrates it to v2 on disk: each legacy `verified` node gets one chance to earn
+the word back by executing its cited tests right then, and settles at `linked`
+otherwise. The migration prints a one-line summary and is idempotent.
+
+Clearing the verify command (`shape config --verify-command none`) demotes
+every `verified` node to `linked` in the same write, since nothing can execute
+anymore.
+
+## Limitations
+
+Known and deliberately unaddressed, so the map does not imply guarantees it
+cannot make:
+
+- **Bash-created files are invisible to the edit ledger.** Unmapped-edit nudges
+  see files touched through the agent's edit tools; a file written by a shell
+  command is not tracked.
+- **Evidence relevance is not judged.** The tool checks that cited evidence
+  exists, is named, is fingerprinted, and (for `verified`) executes and passes.
+  Whether that test actually exercises the stated intent is a human judgment.
+- **Symlink containment is textual.** Evidence paths are refused when they
+  point outside the repo root by their text; a symlink inside the repo pointing
+  out of it is not detected.
+- **Coverage is not derived from the code.** Nodes and their verdicts are
+  authored; nothing infers the map from the repository.
+- **The map is not a protocol.** The on-disk schema is not published for
+  external tools to write against.
 
 ## Repository layout
 

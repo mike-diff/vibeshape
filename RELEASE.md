@@ -23,8 +23,8 @@ the rest are release operations.
 - [ ] README for strangers: expand the brief How it works into a full concepts section (map vs tasks vs specs, coverage
       semantics, honesty machinery), a 60-second quickstart, FAQ (why a CLI
       gate, why read-only viewer, what suspect means), limitations stated
-      plainly (coverage judgments are assessments against intents; only
-      verified touches tests)
+      plainly (coverage judgments are assessments against intents; linked
+      cites a test, only verified executes one)
 - [ ] Uninstall section: plugin removal, deleting `.shape/`, stripping the
       CLAUDE.md/AGENTS.md blocks
 - [ ] Agent-agnostic usage: the CLI and AGENTS.md block for non-Claude agents
@@ -58,5 +58,8 @@ These were evaluated and cut, not forgotten:
   humans steer in prose, the CLI is the escape hatch
 - VS Code custom editor, JSON Canvas export, File System Access viewer,
   npm publishing: post-1.0 candidates if demand appears
-- Test execution in `shape audit` (running linked tests): verified means
-  named tests existed and passed at link time; running them belongs to CI
+- Semantic relevance of evidence: the tool checks that a cited test exists, is
+  named, is fingerprinted, and passes; whether it exercises the stated intent
+  stays a human judgment
+- Symlink containment for evidence paths: containment is checked textually
+  against the repo root, not by resolving the filesystem

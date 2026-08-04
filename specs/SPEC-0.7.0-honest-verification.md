@@ -81,3 +81,9 @@ T7 docs + skills (R13) and parked-limitations documentation. Prereq: T1-T6 for a
 T8 release: migrate both live maps for real, re-run the full Sol reproduction set, unit-test-quality + lean-build self-review, version 0.7.0, plugin updates, sync bundle refresh.
 
 Acceptance for the release = contract v2 acceptance section, verbatim.
+
+Errata (approved during build): R2 settle target refined - a legacy verified
+node without named test evidence settles at covered, not linked, because
+blanket-linked would create the structurally-suspect states R7 forbids.
+QA boundary ruling: linked citing prose-as-test stays audit-clean by design
+(C1 non-goal); the runner backstop applies to verified only.

@@ -22,8 +22,11 @@ are the cartographer: the map must reflect the territory after every change.
    - Built something with no node: `shape add <parent> --title "..." --intent "..."` then set its coverage.
    - Removed a feature: `shape rm <id>`.
 3. **Audit** - when asked, or when the map looks stale: `shape audit` flags
-   nodes whose evidence drifted; re-assess each flagged node against the code,
-   then `shape review <id>` once its status is honest again.
+   nodes whose evidence drifted or was never sound. Re-assess each flagged node
+   against the code, then clear it by re-asserting the claim:
+   `shape set <id> --coverage <level> --evidence <fresh evidence>`. There is no
+   command that just marks a node reviewed; clearing suspicion costs a real
+   re-assertion, which re-runs every gate.
 
 ## Coverage levels (leaves assert, parents derive)
 
@@ -32,16 +35,22 @@ are the cartographer: the map must reflect the territory after every change.
 - `partial` - some evidence, incomplete against the intent.
 - `covered` - the code embodies the intent; the CLI refuses this without
   `--evidence`. No evidence means partial, not covered.
-- `verified` - covered AND named tests exercise it; the CLI refuses this
-  without at least one `--evidence test:path#name` link, and when the repo
-  has a verify command configured (`shape config --verify-command`), the CLI
-  executes the cited tests and refuses verified unless they pass right now.
-  Prefer reaching verified over accumulating covered: covered is judgment,
-  verified is an executed fact. When you finish a feature that has tests,
-  always link them by name.
+- `linked` - covered AND a named test is cited, but nothing executed it. The
+  CLI refuses this without at least one `--evidence test:path#name` link.
+- `verified` - `linked` AND the cited tests were executed and passed at the
+  moment of the claim. This requires a configured verify command
+  (`shape config --verify-command`); without one the CLI refuses verified
+  outright and tells you to use `linked`. Prefer reaching verified over
+  accumulating covered: covered is judgment, linked is a citation, verified is
+  an executed fact.
 
-Never set coverage on a node with children; parents roll up automatically
-(a parent is covered only when every child is).
+Never set coverage on a node with children; parents roll up automatically. A
+parent never claims more than its weakest child, so one `linked` sibling pulls
+a `verified` parent down to `linked`.
+
+Changing a node's `--intent` and its `--coverage` in the same call requires
+fresh `--evidence`: evidence gathered against the old intent may not silently
+vouch for a new one.
 
 ## Teammates and subagents
 
@@ -85,8 +94,8 @@ number - the gaps view sorts by importance for a reason.
 
 - Never edit `.shape/*.json` directly. The CLI owns validation, locking, and
   atomic writes. A hook will deny direct edits.
-- A `covered`/`verified` claim without `--evidence` is a guess - always link
-  the files and tests that realize the intent.
+- A `covered`/`linked`/`verified` claim without `--evidence` is a guess - always
+  link the files and tests that realize the intent.
 - Gap notes must be specific enough to steer by: "refresh-token rotation not
   implemented", not "needs work".
 - Write intents in EARS form so coverage is judgeable:
@@ -106,8 +115,20 @@ shape add / --title <t>                            new top-level area
 shape set <id> [--coverage <level>] [--gap <text>] [--clear-gap] [--evidence type:path[#name]]...
 shape rm <id> [--force]                            remove node/subtree
 shape mv <id> <new-parent>                         move subtree (ids rewritten)
-shape audit [--run]                                flag drifted assessments; --run also executes verified tests (nonzero exit if any)
-shape config [--verify-command <tpl>]              show or set the test-run template ({path}, {name})
-shape review <id>                                  clear a suspect flag after re-assessment
+shape audit [--run]                                flag drifted and unfounded claims; --run also executes verified tests (nonzero exit if any)
+shape config [--verify-command <tpl>]              show or set the test-run template ({path}, {name}); "none" clears it and demotes verified to linked
 shape prime                                        this orientation + current tree
 ```
+
+## What the tool does not check
+
+Say so plainly rather than implying a guarantee the map cannot make:
+
+- **Evidence relevance.** The CLI checks that cited evidence exists, is named,
+  is fingerprinted, and (for verified) passes. Whether the test actually
+  exercises the stated intent is your judgment, and the human's.
+- **Files written by shell commands.** Unmapped-edit nudges only see files
+  touched through edit tools; a file created with `bash` is not tracked.
+- **Symlinks out of the repo.** Evidence paths are contained textually, not by
+  resolving the filesystem.
+- **Anything not authored.** Nothing infers nodes or verdicts from the code.
