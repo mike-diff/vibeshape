@@ -239,6 +239,12 @@ describe('shape CLI', () => {
     assert.ok(output.includes('WARN    auth/oauth-login: covered with no evidence links'));
   });
 
+  it('rejects a malformed explicit --id instead of corrupting the map', () => {
+    const repo = seededRepo();
+    assert.throws(() => shape(repo, 'add', 'auth', '--title', 'Bad', '--id', 'UPPER CASE!'), /kebab-case slug/);
+    assert.ok(shape(repo, 'tree', '--compact').includes('[M] auth/login'));
+  });
+
   it('init refuses to create a nested map inside an existing one', () => {
     const repo = tempRepo();
     shape(repo, 'init', '--name', 'outer');

@@ -1,3 +1,5 @@
+import { SLUG_PATTERN } from './schema.mjs';
+
 export function slugify(text) {
     const slug = text
         .toLowerCase()
@@ -43,6 +45,9 @@ export function areaOf(shape, id) {
  */
 export function addNode(shape, parentId, options) {
     const slug = options.slug ?? slugify(options.title);
+    if (!SLUG_PATTERN.test(slug)) {
+        throw new Error(`invalid id "${slug}" - must be a kebab-case slug (lowercase letters, digits, hyphens)`);
+    }
     const node = { id: slug, title: options.title };
     if (options.intent)
         node.intent = options.intent;
