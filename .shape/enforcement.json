@@ -98,9 +98,14 @@
     {
       "id": "enforcement/skills",
       "title": "Workflow skills",
-      "intent": "WHEN the shape or survey skill activates THE SYSTEM SHALL teach the maintenance loop, evidence bar, and report-before-write survey",
+      "intent": "WHEN the init, survey, or shape skill activates THE SYSTEM SHALL route adoption to the right entry point and teach the maintenance loop, evidence bar, and report-before-write approval",
       "coverage": "covered",
       "evidence": [
+        {
+          "type": "file",
+          "path": "plugin/skills/init/SKILL.md",
+          "hash": "6e3134653a0e7e12"
+        },
         {
           "type": "file",
           "path": "plugin/skills/shape/SKILL.md",
@@ -113,8 +118,8 @@
         }
       ],
       "assessed": {
-        "at": "2026-08-04",
-        "gitRef": "839d0d9"
+        "at": "2026-08-05",
+        "gitRef": "9b7b5f0"
       }
     }
   ]

@@ -100,9 +100,10 @@ citizens of the map:
   validation, locking, and atomic writes)
 - the compact tree is injected into context each session and re-injected when
   it changes, so the agent always knows the current map
-- a `shape` skill teaches the maintenance loop (consult, update, audit) and a
-  `survey` skill bootstraps a proposed map from an existing codebase, with
-  human approval before anything is written
+- three skills cover the lifecycle: `init` sets up a map from conversation in a
+  repo that has none, `survey` bootstraps one from an existing codebase, and
+  `shape` teaches the ongoing loop (consult, update, audit). Both bootstrap
+  skills propose the tree and wait for human approval before writing anything.
 
 ## Commands
 
